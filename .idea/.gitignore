@@ -11,11 +11,14 @@
 
 # IDE-specific local settings and caches
 /workspace.xml
+/MapleGood.iml
+/misc.xml
+/modules.xml
+/vcs.xml
 /usage.statistics.xml
 /indexLayout.xml
 /libraries/
 /caches/
-/modules.xml
 /workspace/
 /inspectionProfiles/
 
