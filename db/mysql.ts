@@ -1,4 +1,5 @@
-import mysql, { Pool, RowDataPacket } from "mysql2/promise";
+import type { ResultSetHeader, QueryResult } from "mysql2";
+import mysql, { Pool, PoolConnection, RowDataPacket } from "mysql2/promise";
 
 let pool: Pool | null = null;
 
@@ -44,5 +45,36 @@ export async function query<T extends RowDataPacket[] = RowDataPacket[]>(
 ): Promise<[T, mysql.FieldPacket[]]> {
   const currentPool = getMysqlPool();
   return currentPool.query<T>(sql, params);
+}
+
+export async function mutate(
+  sql: string,
+  params: readonly unknown[] = [],
+  conn?: PoolConnection
+): Promise<ResultSetHeader> {
+  const executor = conn ?? getMysqlPool();
+  const [result] = await executor.execute<QueryResult>(
+    sql,
+    params as unknown as (string | number | boolean | Date | Buffer | null)[]
+  );
+  return result as ResultSetHeader;
+}
+
+export async function transaction<T>(
+  fn: (conn: PoolConnection) => Promise<T>
+): Promise<T> {
+  const currentPool = getMysqlPool();
+  const conn = await currentPool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const out = await fn(conn);
+    await conn.commit();
+    return out;
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
 }
 

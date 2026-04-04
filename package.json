@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.11.3",
     "@hookform/resolvers": "^5.2.2",
     "lucide-react": "^1.7.0",
@@ -21,6 +23,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.7",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

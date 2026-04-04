@@ -1,5 +1,3 @@
-
-import userImage from "../public/images/userImage.png"
 import logoIcon from "../public/images/logo icon.png";
 import Image from "next/image";
 import { Search, CircleUser } from "lucide-react";

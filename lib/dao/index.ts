@@ -1,0 +1,12 @@
+export { cartItemDao } from "@/lib/dao/cart-item.dao";
+export { categoryDao } from "@/lib/dao/category.dao";
+export { customerDao } from "@/lib/dao/customer.dao";
+export { customerReviewDao } from "@/lib/dao/customer-review.dao";
+export { orderDao } from "@/lib/dao/order.dao";
+export { orderItemDao } from "@/lib/dao/order-item.dao";
+export { paymentDao } from "@/lib/dao/payment.dao";
+export { productDao } from "@/lib/dao/product.dao";
+export { productCategoryDao } from "@/lib/dao/product-category.dao";
+export { shoppingCartDao } from "@/lib/dao/shopping-cart.dao";
+export { wishlistDao } from "@/lib/dao/wishlist.dao";
+export { wishlistItemDao } from "@/lib/dao/wishlist-item.dao";
