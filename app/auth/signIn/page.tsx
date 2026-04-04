@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import NavigationBarAuth from "../../components/NavigationBarAuth";
 import { Controller, useForm } from "react-hook-form";
 import z from "zod";
@@ -6,17 +6,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
+
 const loginSchema = z.object({
-  email: z.email("invalid Email address!"),
-  password: z
-    .string()
-    .min(8, "invalid Password!"),
-})
+  email: z.string().email("invalid Email address!"),
+  password: z.string().min(8, "invalid Password!"),
+});
 
 type loginForm = z.infer<typeof loginSchema>
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState<boolean>(true);
+  const [apiError, setApiError] = useState<string | null>(null);
   const { control, handleSubmit, formState: { errors } } = useForm<loginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -25,10 +25,26 @@ export default function SignIn() {
     },
     mode: "onSubmit",
   });
-  const router = useRouter()
-  const onSubmit = () => {
+  const router = useRouter();
+
+  const onSubmit = async (data: loginForm) => {
+    setApiError(null);
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email: data.email, password: data.password }),
+    });
+    const payload = (await res.json().catch(() => ({}))) as {
+      error?: string;
+    };
+    if (!res.ok) {
+      setApiError(payload.error ?? "Sign in failed");
+      return;
+    }
     router.push("/user");
-  }
+    router.refresh();
+  };
 
 
 
@@ -45,6 +61,9 @@ export default function SignIn() {
           </h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-50 p-8 rounded shadow-md w-full max-w-md space-y-4">
+            {apiError && (
+              <p className="text-red-600 text-sm font-medium">{apiError}</p>
+            )}
             <div>
               <label className="block mb-1 text-black font-bold ">Email</label>
               <Controller
