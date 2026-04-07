@@ -1,6 +1,4 @@
-import Link from "next/link"
+import { redirect } from "next/navigation";
 export default function Navigate() {
-  return (
-    <Link href="auth/signIn">Go to Sign In</Link>
-  )
+  redirect("/auth/signIn");
 }
