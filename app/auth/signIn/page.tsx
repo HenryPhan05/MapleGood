@@ -17,6 +17,7 @@ type loginForm = z.infer<typeof loginSchema>
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState<boolean>(true);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState();
   const { control, handleSubmit, formState: { errors } } = useForm<loginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -27,27 +28,37 @@ export default function SignIn() {
   });
   const router = useRouter();
 
-  const onSubmit = async (data: loginForm) => {
-    setApiError(null);
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email: data.email, password: data.password }),
-    });
-    const payload = (await res.json().catch(() => ({}))) as {
-      error?: string;
+  /* CONNECT DATABASE
+    const onSubmit = async (data: loginForm) => {
+      setApiError(null);
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: data.email, password: data.password }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      if (!res.ok) {
+        setApiError(payload.error ?? "Sign in failed");
+        return;
+      }
+      router.push("/user");
+      router.refresh();
     };
-    if (!res.ok) {
-      setApiError(payload.error ?? "Sign in failed");
+  */
+
+  const onSubmit = (data: loginForm) => {
+    setApiError(null);
+    if (data.email === process.env.NEXT_PUBLIC_USEREMAIL && data.password === process.env.NEXT_PUBLIC_USERPASSWORD) {
+      router.push("/user");
+    }
+    else {
+      setApiError("Email or Password is incorrect!");
       return;
     }
-    router.push("/user");
-    router.refresh();
-  };
-
-
-
+  }
   return (
     <>
       <div className="sticky top-0 z-50 bg-white ">
@@ -61,9 +72,7 @@ export default function SignIn() {
           </h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-50 p-8 rounded shadow-md w-full max-w-md space-y-4">
-            {apiError && (
-              <p className="text-red-600 text-sm font-medium">{apiError}</p>
-            )}
+
             <div>
               <label className="block mb-1 text-black font-bold ">Email</label>
               <Controller
@@ -104,9 +113,13 @@ export default function SignIn() {
                 >
                   {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                 </button>
+                {apiError && (
+                  <p className="text-red-600 text-sm font-medium">{apiError}</p>
+                )}
               </div>
 
             </div>
+
             <div className="flex flex-row justify-between">
 
               <button
