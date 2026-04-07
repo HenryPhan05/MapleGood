@@ -129,7 +129,7 @@ export default function homepageUser() {
                       <StarRating rate={product.rate} />
                     </div>
                   </div>
-                  <button className="text-black mt-1 ml-1 p-3 rounded-2xl hover:opacity-80 hover:cursor-pointer" style={{ backgroundColor: "#E8A800" }}>Add to cart</button>
+                  <button className="text-black mt-1 ml-1 p-3 rounded-2xl hover:opacity-80 hover:cursor-pointer font-bold" style={{ backgroundColor: "#E8A800" }}>Add to cart</button>
                 </div>
               ))}
             </div>
