@@ -115,12 +115,12 @@ export default function homepageUser() {
           <h1 className="mt-20 ml-5 text-4xl font-extrabold" style={{ color: "#E8A800" }}>Popular</h1>
           <p className="text-gray-500 ml-5 mt-2 italic text-xm">The most popular upgrades for modern vehicles</p>
           <div className="mt-5 flex flex-row justify-center gap-8">
-            <ArrowLeft size={50} color={'black'} className="p-3 rounded-full mt-50" style={{ backgroundColor: "#E8A800" }} />
+            <ArrowLeft size={50} color={'black'} className="p-3 rounded-full mt-50 hover:cursor-pointer hover:opacity-90" style={{ backgroundColor: "#E8A800" }} />
             <div className="flex flex-row justify-between gap-10 ">
               {sampleProductsData.map((product) => (
-                <div key={product.id} className="bg-white w-[350px]  flex-col items-center rounded-2xl hover:opacity-70 hover:cursor-pointer">
+                <div key={product.id} className="bg-white w-[350px] pb-3  flex-col items-center rounded-2xl">
                   <Image src={product.image} alt={product.name} width={250} height={250} className="mt-10 mr-10 ml-10" />
-                  <h1 className="mt-5 ml-1 text-black text-xl font-bold">{product.name}</h1>
+                  <h1 className="mt-5 ml-1 text-black text-xl font-bold hover:underline hover:cursor-pointer">{product.name}</h1>
                   <p className="mt-1 ml-1 text-gray-500">{product.description}</p>
                   <div className="flex flex-row justify-between">
                     <p className="mt-5 ml-1 text-2xl text-black font-bold">${product.price.toFixed(2)}</p>
@@ -129,10 +129,11 @@ export default function homepageUser() {
                       <StarRating rate={product.rate} />
                     </div>
                   </div>
+                  <button className="text-black mt-1 ml-1 p-3 rounded-2xl hover:opacity-80 hover:cursor-pointer" style={{ backgroundColor: "#E8A800" }}>Add to cart</button>
                 </div>
               ))}
             </div>
-            <ArrowRight size={50} color={'black'} className="p-3 rounded-full mt-50" style={{ backgroundColor: "#E8A800" }} />
+            <ArrowRight size={50} color={'black'} className="p-3 rounded-full mt-50 hover:cursor-pointer hover:opacity-80" style={{ backgroundColor: "#E8A800" }} />
           </div>
           <div>
 

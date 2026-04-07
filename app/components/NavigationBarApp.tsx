@@ -30,7 +30,7 @@ export default function NavigationBarApp() {
           <div className="bg-white rounded-full w-15 h-15 flex items-center justify-center">
             <User size={35} className="text-gray-700" />
           </div>
-          <span className="text-black font-semibold text-xl underline whitespace-nowrap">
+          <span className="ml-2 text-black font-semibold text-2xl underline whitespace-nowrap">
             JohnDoe123
           </span>
         </div>
