@@ -1,9 +1,12 @@
+"use client"
 import Image from "next/image";
 import Link from "next/link";
 import logoIcon from "../public/images/logo icon.png";
 import { Search, ShoppingCart, User } from "lucide-react";
-
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 export default function NavigationBarApp() {
+  const router = useRouter();
   return (
     <div style={{ backgroundColor: "#E8A800" }} className="px-5 pt-3 pb-0 font-sans flex flex-col gap-5">
 
@@ -44,13 +47,15 @@ export default function NavigationBarApp() {
           Contact
         </button>
 
-        <Link href="/user/cart" className="relative flex flex-col items-center cursor-pointer  mt-3  hover:opacity-70  hover:cursor-pointer">
+        <button
+          onClick={() => router.push("/user/cart")}
+          className="relative flex flex-col items-center cursor-pointer  mt-3  hover:opacity-70  hover:cursor-pointer ">
           <span className="absolute -top-6   text-3xl font-extrabold flex items-center justify-center">
             0
           </span>
           <ShoppingCart size={60} className="text-black" />
           <p className="absolute -right-13 mt-3 text-2xl font-bold text-black">Cart</p>
-        </Link>
+        </button>
 
       </div>
 
