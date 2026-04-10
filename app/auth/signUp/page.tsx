@@ -9,14 +9,21 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { auth } from "../../../lib/firebase"; 
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"; 
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 const signUpSchema = z.object({
   firstName: z.string().min(1, "First Name is required!"),
   lastName: z.string().min(1, "Last Name is required!"),
   email: z.string().email("Invalid Email address!"),
-  password: z.string().min(8, "Password must be at least 8 characters!"),
-  confirmPassword: z.string()
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters.")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter.")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter.")
+    .regex(/[0-9]/, "Password must contain at least one number.")
+    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character.")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain a special character!"),
+  confirmPassword: z.string().min(1, "Please confirm your password."),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match!",
   path: ["confirmPassword"],
