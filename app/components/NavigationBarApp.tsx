@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, ShoppingCart, User, LogOut, ChevronDown } from "lucide-react";
+// Added LayoutDashboard to the imports
+import { Search, ShoppingCart, User, LogOut, ChevronDown, LayoutDashboard } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import logoIcon from "../public/images/logo icon.png";
 
@@ -42,7 +43,6 @@ export default function NavigationBarApp() {
     e.preventDefault();
     if (searchQuery.trim()) {
       console.log("Searching for:", searchQuery);
-
     }
   };
 
@@ -98,10 +98,20 @@ export default function NavigationBarApp() {
               <div className="absolute top-full mt-3 right-0 w-48 bg-white rounded-md shadow-lg py-1 border border-gray-200 z-50">
                 <button
                   onClick={handleLogout}
-                  className="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-gray-100 font-bold transition-colors cursor-pointer"
+                  className="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-gray-100 font-bold transition-colors cursor-pointer border-b border-gray-100"
                 >
                   <LogOut className="h-5 w-5 mr-3" />
                   Log Out
+                </button>
+                <button
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    router.push("/dashboard");
+                  }}
+                  className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 font-bold transition-colors cursor-pointer"
+                >
+                  <LayoutDashboard className="h-5 w-5 mr-3" />
+                  Admin Dashboard
                 </button>
               </div>
             )}
