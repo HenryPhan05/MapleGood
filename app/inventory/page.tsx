@@ -1,14 +1,64 @@
 "use client";
 
-import { FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, ImagePlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronDown, ImagePlus, Loader2 } from "lucide-react";
 
 const ACCENT = "#E0A800";
 
 export default function InventoryProductRegistrationPage() {
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    // Extract data from the form
+    const formData = new FormData(e.currentTarget);
+    const productName = formData.get("productName") as string;
+    const unitPrice = formData.get("unitPrice") as string;
+    const stockLevel = formData.get("stockLevel") as string;
+    const description = formData.get("description") as string;
+    
+    // Note: If you want to use the category later, you can extract it like this:
+    // const category = formData.get("category") as string;
+
+    if (!productName || !unitPrice || !stockLevel) {
+      setError("Please fill out all required fields (Name, Price, Stock).");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productName,
+          price: unitPrice, 
+          stockQuantity: Number(stockLevel),
+          description,
+          isActive: true, // Assuming new products are active by default
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to save product.");
+      }
+
+      // Success! Redirect back to inventory list
+      router.push("/inventory");
+      router.refresh(); 
+    } catch (err: any) {
+      setError(err.message);
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -35,6 +85,7 @@ export default function InventoryProductRegistrationPage() {
         <div className="flex shrink-0 gap-3">
           <button
             type="button"
+            onClick={() => router.back()}
             className="rounded-xl border-2 bg-white px-5 py-2.5 text-sm font-bold transition hover:bg-gray-50"
             style={{ borderColor: ACCENT, color: ACCENT }}
           >
@@ -43,13 +94,22 @@ export default function InventoryProductRegistrationPage() {
           <button
             type="submit"
             form="product-registration-form"
-            className="rounded-xl px-6 py-2.5 text-sm font-bold text-black transition hover:opacity-90"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-bold text-black transition hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: ACCENT }}
           >
-            Save Product
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            {isSubmitting ? "Saving..." : "Save Product"}
           </button>
         </div>
       </div>
+
+      {/* Error Message Display */}
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+          <strong>Error: </strong> {error}
+        </div>
+      )}
 
       <form id="product-registration-form" onSubmit={onSubmit}>
         <div className="grid gap-6 lg:grid-cols-2">
@@ -69,6 +129,7 @@ export default function InventoryProductRegistrationPage() {
                 <input
                   id="productName"
                   name="productName"
+                  required
                   type="text"
                   placeholder="e.g., MK-II Precision Oscilloscope"
                   className="w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-black outline-none focus:ring-2 focus:ring-black/10"
@@ -112,16 +173,18 @@ export default function InventoryProductRegistrationPage() {
                   >
                     Unit Price (CAD)
                   </label>
-                  <div className="flex rounded-xl border border-gray-200 bg-gray-100">
+                  <div className="flex rounded-xl border border-gray-200 bg-gray-100 focus-within:ring-2 focus-within:ring-black/10">
                     <span className="flex items-center pl-4 text-gray-600">
                       $
                     </span>
                     <input
                       id="unitPrice"
                       name="unitPrice"
-                      type="text"
-                      inputMode="decimal"
-                      defaultValue="0.0"
+                      required
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
                       className="w-full rounded-r-xl bg-transparent py-3 pr-4 text-black outline-none"
                     />
                   </div>
@@ -136,6 +199,7 @@ export default function InventoryProductRegistrationPage() {
                   <input
                     id="stockLevel"
                     name="stockLevel"
+                    required
                     type="number"
                     min={0}
                     defaultValue={0}

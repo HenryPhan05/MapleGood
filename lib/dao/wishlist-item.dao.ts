@@ -1,41 +1,37 @@
-import type { PoolConnection } from "mysql2/promise";
-
-import { runExecute, runQuery } from "@/lib/dao/runner";
+import { db } from "@/lib/firebase-admin";
 import type { WishlistItemRow } from "@/types/db";
 
+const collection = db.collection("wishlist_items");
+
 export const wishlistItemDao = {
-  async listByWishlist(
-    wishlistID: number,
-    conn?: PoolConnection
-  ): Promise<WishlistItemRow[]> {
-    return runQuery<WishlistItemRow[]>(
-      "SELECT * FROM WishlistItems WHERE wishlistID = ? ORDER BY wishlistItemID ASC",
-      [wishlistID],
-      conn
-    );
+  async listByWishlist(wishlistID: string): Promise<WishlistItemRow[]> {
+    const snapshot = await collection
+      .where("wishlistID", "==", wishlistID)
+      .orderBy("createdAt", "asc")
+      .get();
+      
+    return snapshot.docs.map(doc => ({ ...doc.data(), wishlistItemID: doc.id } as WishlistItemRow));
   },
 
-  async insert(
-    data: { wishlistID: number; productID: number },
-    conn?: PoolConnection
-  ): Promise<number> {
-    const res = await runExecute(
-      "INSERT INTO WishlistItems (wishlistID, productID) VALUES (?, ?)",
-      [data.wishlistID, data.productID],
-      conn
-    );
-    return res.insertId;
+  async insert(data: { wishlistID: string; productID: string }): Promise<string> {
+    const docRef = await collection.add({
+      wishlistID: data.wishlistID,
+      productID: data.productID,
+      createdAt: new Date(),
+    });
+    return docRef.id;
   },
 
-  async delete(
-    wishlistID: number,
-    productID: number,
-    conn?: PoolConnection
-  ): Promise<void> {
-    await runExecute(
-      "DELETE FROM WishlistItems WHERE wishlistID = ? AND productID = ?",
-      [wishlistID, productID],
-      conn
-    );
+  async delete(wishlistID: string, productID: string): Promise<void> {
+    const snapshot = await collection
+      .where("wishlistID", "==", wishlistID)
+      .where("productID", "==", productID)
+      .get();
+      
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
   },
 };

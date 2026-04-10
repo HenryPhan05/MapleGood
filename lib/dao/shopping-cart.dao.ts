@@ -1,54 +1,35 @@
-import type { PoolConnection } from "mysql2/promise";
-
-import { runExecute, runQuery } from "@/lib/dao/runner";
+import { db } from "@/lib/firebase-admin";
 import type { ShoppingCartRow } from "@/types/db";
 
+const collection = db.collection("shopping_carts");
+
 export const shoppingCartDao = {
-  async findByCustomer(
-    customerID: number,
-    conn?: PoolConnection
-  ): Promise<ShoppingCartRow | null> {
-    const rows = await runQuery<ShoppingCartRow[]>(
-      "SELECT * FROM ShoppingCart WHERE customerID = ? LIMIT 1",
-      [customerID],
-      conn
-    );
-    return rows[0] ?? null;
+  async findByCustomer(customerID: string): Promise<ShoppingCartRow | null> {
+    const snapshot = await collection
+      .where("customerID", "==", customerID)
+      .limit(1)
+      .get();
+      
+    if (snapshot.empty) return null;
+    return { ...snapshot.docs[0].data(), cartID: snapshot.docs[0].id } as ShoppingCartRow;
   },
 
-  async findById(
-    cartID: number,
-    conn?: PoolConnection
-  ): Promise<ShoppingCartRow | null> {
-    const rows = await runQuery<ShoppingCartRow[]>(
-      "SELECT * FROM ShoppingCart WHERE cartID = ? LIMIT 1",
-      [cartID],
-      conn
-    );
-    return rows[0] ?? null;
+  async findById(cartID: string): Promise<ShoppingCartRow | null> {
+    const doc = await collection.doc(cartID).get();
+    if (!doc.exists) return null;
+    return { ...doc.data(), cartID: doc.id } as ShoppingCartRow;
   },
 
-  async insert(
-    data: { customerID: number; expiresAt?: Date | null },
-    conn?: PoolConnection
-  ): Promise<number> {
-    const res = await runExecute(
-      "INSERT INTO ShoppingCart (customerID, expiresAt) VALUES (?, ?)",
-      [data.customerID, data.expiresAt ?? null],
-      conn
-    );
-    return res.insertId;
+  async insert(data: { customerID: string; expiresAt?: Date | null }): Promise<string> {
+    const docRef = await collection.add({
+      customerID: data.customerID,
+      expiresAt: data.expiresAt ?? null,
+      createdAt: new Date(),
+    });
+    return docRef.id;
   },
 
-  async updateExpiresAt(
-    cartID: number,
-    expiresAt: Date | null,
-    conn?: PoolConnection
-  ): Promise<void> {
-    await runExecute(
-      "UPDATE ShoppingCart SET expiresAt = ? WHERE cartID = ?",
-      [expiresAt, cartID],
-      conn
-    );
+  async updateExpiresAt(cartID: string, expiresAt: Date | null): Promise<void> {
+    await collection.doc(cartID).update({ expiresAt });
   },
 };

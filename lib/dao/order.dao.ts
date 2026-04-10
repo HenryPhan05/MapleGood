@@ -1,69 +1,62 @@
-import type { PoolConnection } from "mysql2/promise";
-
-import { runExecute, runQuery } from "@/lib/dao/runner";
+import { db } from "@/lib/firebase-admin";
 import type { OrderRow } from "@/types/db";
 
-const T = "`Order`";
+const collection = db.collection("orders");
 
 export const orderDao = {
-  async findById(
-    orderID: number,
-    conn?: PoolConnection
-  ): Promise<OrderRow | null> {
-    const rows = await runQuery<OrderRow[]>(
-      `SELECT * FROM ${T} WHERE orderID = ? AND isDeleted = FALSE LIMIT 1`,
-      [orderID],
-      conn
-    );
-    return rows[0] ?? null;
+  async findById(orderID: string): Promise<OrderRow | null> {
+    const doc = await collection.doc(orderID).get();
+    if (!doc.exists) return null;
+    
+    const data = doc.data() as OrderRow;
+    if (data.isDeleted) return null;
+    
+    return { ...data, orderID: doc.id };
   },
 
   async listByCustomer(
-    customerID: number,
+    customerID: string,
     limit: number,
-    offset: number,
-    conn?: PoolConnection
+    offset: number
   ): Promise<OrderRow[]> {
-    return runQuery<OrderRow[]>(
-      `SELECT * FROM ${T} WHERE customerID = ? AND isDeleted = FALSE ORDER BY orderID DESC LIMIT ? OFFSET ?`,
-      [customerID, limit, offset],
-      conn
-    );
+    const snapshot = await collection
+      .where("customerID", "==", customerID)
+      .where("isDeleted", "==", false)
+      .orderBy("createdAt", "desc") // Replacing orderID DESC with a timestamp
+      .offset(offset)
+      .limit(limit)
+      .get();
+      
+    return snapshot.docs.map(doc => ({ ...doc.data(), orderID: doc.id } as OrderRow));
   },
 
-  async insert(
-    data: {
-      customerID: number;
-      totalAmount: string | number;
-      orderStatus?: string | null;
-      shippingAddress?: string | null;
-      shippingCity?: string | null;
-      shippingProvince?: string | null;
-      shippingPostalCode?: string | null;
-      shippingCountry?: string | null;
-    },
-    conn?: PoolConnection
-  ): Promise<number> {
-    const res = await runExecute(
-      `INSERT INTO ${T} (customerID, totalAmount, orderStatus, shippingAddress, shippingCity, shippingProvince, shippingPostalCode, shippingCountry)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        data.customerID,
-        String(data.totalAmount),
-        data.orderStatus ?? "PENDING",
-        data.shippingAddress ?? null,
-        data.shippingCity ?? null,
-        data.shippingProvince ?? null,
-        data.shippingPostalCode ?? null,
-        data.shippingCountry ?? "Canada",
-      ],
-      conn
-    );
-    return res.insertId;
+  async insert(data: {
+    customerID: string;
+    totalAmount: string | number;
+    orderStatus?: string | null;
+    shippingAddress?: string | null;
+    shippingCity?: string | null;
+    shippingProvince?: string | null;
+    shippingPostalCode?: string | null;
+    shippingCountry?: string | null;
+  }): Promise<string> {
+    const docRef = await collection.add({
+      customerID: data.customerID,
+      totalAmount: String(data.totalAmount),
+      orderStatus: data.orderStatus ?? "PENDING",
+      shippingAddress: data.shippingAddress ?? null,
+      shippingCity: data.shippingCity ?? null,
+      shippingProvince: data.shippingProvince ?? null,
+      shippingPostalCode: data.shippingPostalCode ?? null,
+      shippingCountry: data.shippingCountry ?? "Canada",
+      isDeleted: false,
+      createdAt: new Date(),
+    });
+    return docRef.id;
   },
 
   async update(
-    orderID: number,
+    orderID: string,
     data: Partial<{
       orderStatus: string | null;
       totalAmount: string | number;
@@ -73,53 +66,20 @@ export const orderDao = {
       shippingProvince: string | null;
       shippingPostalCode: string | null;
       shippingCountry: string | null;
-    }>,
-    conn?: PoolConnection
+    }>
   ): Promise<void> {
-    const fields: string[] = [];
-    const values: unknown[] = [];
-    if (data.orderStatus !== undefined) {
-      fields.push("orderStatus = ?");
-      values.push(data.orderStatus);
+    if (Object.keys(data).length === 0) return;
+    
+    // Ensure totalAmount is a string if present
+    const updateData = { ...data };
+    if (updateData.totalAmount !== undefined) {
+      updateData.totalAmount = String(updateData.totalAmount);
     }
-    if (data.totalAmount !== undefined) {
-      fields.push("totalAmount = ?");
-      values.push(String(data.totalAmount));
-    }
-    if (data.version !== undefined) {
-      fields.push("version = ?");
-      values.push(data.version);
-    }
-    if (data.shippingAddress !== undefined) {
-      fields.push("shippingAddress = ?");
-      values.push(data.shippingAddress);
-    }
-    if (data.shippingCity !== undefined) {
-      fields.push("shippingCity = ?");
-      values.push(data.shippingCity);
-    }
-    if (data.shippingProvince !== undefined) {
-      fields.push("shippingProvince = ?");
-      values.push(data.shippingProvince);
-    }
-    if (data.shippingPostalCode !== undefined) {
-      fields.push("shippingPostalCode = ?");
-      values.push(data.shippingPostalCode);
-    }
-    if (data.shippingCountry !== undefined) {
-      fields.push("shippingCountry = ?");
-      values.push(data.shippingCountry);
-    }
-    if (!fields.length) return;
-    values.push(orderID);
-    await runExecute(
-      `UPDATE ${T} SET ${fields.join(", ")} WHERE orderID = ? AND isDeleted = FALSE`,
-      values,
-      conn
-    );
+
+    await collection.doc(orderID).update(updateData);
   },
 
-  async softDelete(orderID: number, conn?: PoolConnection): Promise<void> {
-    await runExecute(`UPDATE ${T} SET isDeleted = TRUE WHERE orderID = ?`, [orderID], conn);
+  async softDelete(orderID: string): Promise<void> {
+    await collection.doc(orderID).update({ isDeleted: true });
   },
 };

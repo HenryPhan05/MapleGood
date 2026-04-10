@@ -1,53 +1,34 @@
-import type { PoolConnection } from "mysql2/promise";
-
-import { runExecute, runQuery } from "@/lib/dao/runner";
+import { db } from "@/lib/firebase-admin";
 import type { WishlistRow } from "@/types/db";
 
+const collection = db.collection("wishlists");
+
 export const wishlistDao = {
-  async findById(
-    wishlistID: number,
-    conn?: PoolConnection
-  ): Promise<WishlistRow | null> {
-    const rows = await runQuery<WishlistRow[]>(
-      "SELECT * FROM Wishlist WHERE wishlistID = ? LIMIT 1",
-      [wishlistID],
-      conn
-    );
-    return rows[0] ?? null;
+  async findById(wishlistID: string): Promise<WishlistRow | null> {
+    const doc = await collection.doc(wishlistID).get();
+    if (!doc.exists) return null;
+    return { ...doc.data(), wishlistID: doc.id } as WishlistRow;
   },
 
-  async listByCustomer(
-    customerID: number,
-    conn?: PoolConnection
-  ): Promise<WishlistRow[]> {
-    return runQuery<WishlistRow[]>(
-      "SELECT * FROM Wishlist WHERE customerID = ? ORDER BY wishlistID ASC",
-      [customerID],
-      conn
-    );
+  async listByCustomer(customerID: string): Promise<WishlistRow[]> {
+    const snapshot = await collection
+      .where("customerID", "==", customerID)
+      .orderBy("createdAt", "desc")
+      .get();
+      
+    return snapshot.docs.map(doc => ({ ...doc.data(), wishlistID: doc.id } as WishlistRow));
   },
 
-  async insert(
-    data: { customerID: number; wishlistName?: string | null },
-    conn?: PoolConnection
-  ): Promise<number> {
-    const res = await runExecute(
-      "INSERT INTO Wishlist (customerID, wishlistName) VALUES (?, ?)",
-      [data.customerID, data.wishlistName ?? "My Wishlist"],
-      conn
-    );
-    return res.insertId;
+  async insert(data: { customerID: string; wishlistName?: string | null }): Promise<string> {
+    const docRef = await collection.add({
+      customerID: data.customerID,
+      wishlistName: data.wishlistName ?? "My Wishlist",
+      createdAt: new Date(),
+    });
+    return docRef.id;
   },
 
-  async updateName(
-    wishlistID: number,
-    wishlistName: string,
-    conn?: PoolConnection
-  ): Promise<void> {
-    await runExecute(
-      "UPDATE Wishlist SET wishlistName = ? WHERE wishlistID = ?",
-      [wishlistName, wishlistID],
-      conn
-    );
+  async updateName(wishlistID: string, wishlistName: string): Promise<void> {
+    await collection.doc(wishlistID).update({ wishlistName });
   },
 };

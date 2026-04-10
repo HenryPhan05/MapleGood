@@ -1,68 +1,48 @@
-import type { PoolConnection } from "mysql2/promise";
-
-import { runExecute, runQuery } from "@/lib/dao/runner";
+import { db } from "@/lib/firebase-admin";
 import type { PaymentRow } from "@/types/db";
 
+const collection = db.collection("payments");
+
 export const paymentDao = {
-  async findById(
-    paymentID: number,
-    conn?: PoolConnection
-  ): Promise<PaymentRow | null> {
-    const rows = await runQuery<PaymentRow[]>(
-      "SELECT * FROM Payment WHERE paymentID = ? LIMIT 1",
-      [paymentID],
-      conn
-    );
-    return rows[0] ?? null;
+  async findById(paymentID: string): Promise<PaymentRow | null> {
+    const doc = await collection.doc(paymentID).get();
+    if (!doc.exists) return null;
+    return { ...doc.data(), paymentID: doc.id } as PaymentRow;
   },
 
-  async listByOrder(
-    orderID: number,
-    conn?: PoolConnection
-  ): Promise<PaymentRow[]> {
-    return runQuery<PaymentRow[]>(
-      "SELECT * FROM Payment WHERE orderID = ? ORDER BY paymentID DESC",
-      [orderID],
-      conn
-    );
+  async listByOrder(orderID: string): Promise<PaymentRow[]> {
+    const snapshot = await collection
+      .where("orderID", "==", orderID)
+      .orderBy("createdAt", "desc")
+      .get();
+      
+    return snapshot.docs.map(doc => ({ ...doc.data(), paymentID: doc.id } as PaymentRow));
   },
 
-  async insert(
-    data: {
-      orderID: number;
-      customerID: number;
-      amount: string | number;
-      paymentMethod?: string | null;
-      paymentStatus?: string | null;
-      transactionId?: string | null;
-    },
-    conn?: PoolConnection
-  ): Promise<number> {
-    const res = await runExecute(
-      `INSERT INTO Payment (orderID, customerID, amount, paymentMethod, paymentStatus, transactionId)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        data.orderID,
-        data.customerID,
-        String(data.amount),
-        data.paymentMethod ?? null,
-        data.paymentStatus ?? "PENDING",
-        data.transactionId ?? null,
-      ],
-      conn
-    );
-    return res.insertId;
+  async insert(data: {
+    orderID: string;
+    customerID: string;
+    amount: string | number;
+    paymentMethod?: string | null;
+    paymentStatus?: string | null;
+    transactionId?: string | null;
+  }): Promise<string> {
+    const docRef = await collection.add({
+      orderID: data.orderID,
+      customerID: data.customerID,
+      amount: String(data.amount),
+      paymentMethod: data.paymentMethod ?? null,
+      paymentStatus: data.paymentStatus ?? "PENDING",
+      transactionId: data.transactionId ?? null,
+      createdAt: new Date(),
+    });
+    return docRef.id;
   },
 
   async updateStatus(
-    paymentID: number,
-    paymentStatus: string,
-    conn?: PoolConnection
+    paymentID: string,
+    paymentStatus: string
   ): Promise<void> {
-    await runExecute(
-      "UPDATE Payment SET paymentStatus = ? WHERE paymentID = ?",
-      [paymentStatus, paymentID],
-      conn
-    );
+    await collection.doc(paymentID).update({ paymentStatus });
   },
 };
