@@ -1,7 +1,9 @@
 "use client";
 
-import { Star } from "lucide-react";
+import { Star, Check } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
+import { UseCartStore } from "@/app/products/cartStore";
 
 const ACCENT = "#E0A800";
 
@@ -16,6 +18,7 @@ export type ProductCardProps = {
 };
 
 export default function ProductCard({
+  id,
   categoryLabel,
   title,
   price,
@@ -23,6 +26,25 @@ export default function ProductCard({
   imageSrc,
   imageAlt,
 }: ProductCardProps) {
+  const addToCart = UseCartStore((s) => s.addToCart);
+  const [added, setAdded] = useState(false);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart({
+      id,
+      name: title,
+      category: categoryLabel,
+      price,
+      description: "",
+      quantity: 1,
+      image: imageSrc,
+      rate: rating,
+    });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
+  };
   return (
     <article className="flex flex-col rounded-xl bg-white shadow-md overflow-hidden border border-gray-100">
       <div className="relative aspect-4/3 w-full bg-gray-100">
@@ -59,10 +81,11 @@ export default function ProductCard({
         </p>
         <button
           type="button"
-          className="mt-auto w-full rounded-lg py-2.5 text-center text-sm font-bold text-white transition hover:opacity-90"
-          style={{ backgroundColor: ACCENT }}
+          onClick={handleAddToCart}
+          className="mt-auto w-full rounded-lg py-2.5 text-center text-sm font-bold text-white transition hover:opacity-90 flex items-center justify-center gap-1.5"
+          style={{ backgroundColor: added ? "#16a34a" : ACCENT }}
         >
-          add to cart
+          {added ? (<><Check size={16} /> Added!</>) : "add to cart"}
         </button>
       </div>
     </article>

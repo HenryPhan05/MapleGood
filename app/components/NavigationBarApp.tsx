@@ -8,6 +8,7 @@ import { Search, ShoppingCart, User, LogOut, ChevronDown, LayoutDashboard } from
 import { useState, useRef, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { UseCartStore } from "@/app/products/cartStore";
 import logoIcon from "../public/images/logo icon.png";
 
 const CATEGORIES = [
@@ -23,6 +24,8 @@ export default function NavigationBarApp() {
   const [searchQuery, setSearchQuery] = useState("");
   const [displayName, setDisplayName] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const cartItems = UseCartStore((s) => s.cartItems);
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -143,7 +146,7 @@ export default function NavigationBarApp() {
             className="relative flex flex-col items-center hover:scale-105 transition-transform group cursor-pointer ml-2"
           >
             <span className="absolute -top-3 text-xl font-extrabold flex items-center justify-center text-black">
-              0
+              {cartCount}
             </span>
             <ShoppingCart size={40} className="text-black group-hover:text-gray-800 transition-colors mt-2" />
             <span className="text-lg font-bold text-black group-hover:text-gray-800 transition-colors">

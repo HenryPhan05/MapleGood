@@ -71,8 +71,8 @@ export default function CartPage() {
                     className="bg-white rounded-2xl p-6 flex items-center gap-6"
                   >
                     {/* Product image placeholder */}
-                    <div className="w-28 h-28 bg-gray-200 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Image src={item.image} alt={item.name} />
+                    <div className="w-28 h-28 bg-gray-200 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+                      <Image src={item.image} alt={item.name} fill className="object-contain p-2" sizes="112px" />
                     </div>
 
                     {/* Product info */}
