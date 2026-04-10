@@ -8,15 +8,22 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { auth } from "../../../lib/firebase"; 
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"; 
+import { auth } from "../../../lib/firebase";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 const signUpSchema = z.object({
   firstName: z.string().min(1, "First Name is required!"),
   lastName: z.string().min(1, "Last Name is required!"),
   email: z.string().email("Invalid Email address!"),
-  password: z.string().min(8, "Password must be at least 8 characters!"),
-  confirmPassword: z.string()
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters.")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter.")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter.")
+    .regex(/[0-9]/, "Password must contain at least one number.")
+    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character.")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain a special character!"),
+  confirmPassword: z.string().min(1, "Please confirm your password."),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match!",
   path: ["confirmPassword"],
@@ -28,7 +35,7 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  
+
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -40,14 +47,14 @@ export default function SignUpPage() {
     },
     mode: "onSubmit",
   });
-  
+
   const router = useRouter();
 
   const onSubmit = async (data: SignUpForm) => {
     setApiError(null);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-      
+
       if (userCredential.user) {
         await updateProfile(userCredential.user, {
           displayName: `${data.firstName} ${data.lastName}`
@@ -70,7 +77,7 @@ export default function SignUpPage() {
       <div className="sticky top-0 z-50 bg-white">
         <NavigationBarAuth />
       </div>
-      
+
       <div className="bg-white min-h-screen flex flex-col py-10">
         <div className="flex-1 flex flex-col justify-center items-center">
           <h1 className="text-3xl font-bold mb-6" style={{ color: "#E0A800" }}>
@@ -78,7 +85,7 @@ export default function SignUpPage() {
           </h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-50 p-8 rounded shadow-md w-full max-w-md space-y-4">
-            
+
             {apiError && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
                 <span className="block sm:inline">{apiError}</span>
@@ -191,20 +198,20 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-10 rounded text-black font-bold hover:opacity-70 hover:cursor-pointer disabled:opacity-50" 
+                className="w-full h-10 rounded text-black font-bold hover:opacity-70 hover:cursor-pointer disabled:opacity-50"
                 style={{ backgroundColor: "#E0A800" }}
               >
                 {isSubmitting ? "Creating Account..." : "Sign Up"}
               </button>
             </div>
-            
+
             <div className="text-center mt-4">
               <span className="text-black">Already have an account? </span>
               <Link href="/auth/signIn" className="underline font-bold hover:opacity-70" style={{ color: "#E0A800" }}>
                 Sign In
               </Link>
             </div>
-            
+
           </form>
         </div>
       </div>
