@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 // Added LayoutDashboard to the imports
 import { Search, ShoppingCart, User, LogOut, ChevronDown, LayoutDashboard } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import logoIcon from "../public/images/logo icon.png";
 
 const CATEGORIES = [
@@ -19,7 +21,19 @@ export default function NavigationBarApp() {
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setDisplayName(user.displayName || user.email || "User");
+      } else {
+        setDisplayName("");
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -33,8 +47,8 @@ export default function NavigationBarApp() {
     };
   }, []);
 
-  const handleLogout = () => {
-    console.log("Logged out");
+  const handleLogout = async () => {
+    await import("firebase/auth").then(({ signOut }) => signOut(auth));
     setIsDropdownOpen(false);
     router.push("/auth/signIn");
   };
@@ -42,7 +56,7 @@ export default function NavigationBarApp() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      console.log("Searching for:", searchQuery);
+      router.push(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -90,7 +104,7 @@ export default function NavigationBarApp() {
                 <User size={26} className="text-gray-700" />
               </div>
               <span className="ml-2 text-black font-semibold text-xl underline whitespace-nowrap hidden lg:block">
-                JohnDoe123
+                {displayName || "Guest"}
               </span>
             </button>
 

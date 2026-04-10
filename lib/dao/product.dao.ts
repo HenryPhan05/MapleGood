@@ -32,16 +32,51 @@ export const productDao = {
     return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Product));
   },
 
-  async insert(data: Partial<Product>): Promise<string> {
-    const now = new Date();
-    const docRef = await collection.add({
-      ...data,
-      isDeleted: false,
-      isActive: data.isActive ?? true,
-      createdAt: now,
-      updatedAt: now,
-    });
-    return docRef.id;
+  async search(
+    query: string,
+    limit: number,
+    offset: number,
+    conn?: PoolConnection
+  ): Promise<ProductRow[]> {
+    const pattern = `%${query}%`;
+    return runQuery<ProductRow[]>(
+      `SELECT * FROM Product WHERE isDeleted = FALSE AND isActive = TRUE AND (productName LIKE ? OR brand LIKE ? OR description LIKE ?) ORDER BY productID DESC LIMIT ? OFFSET ?`,
+      [pattern, pattern, pattern, limit, offset],
+      conn
+    );
+  },
+
+  async insert(
+    data: {
+      productName: string;
+      description?: string | null;
+      price: string | number;
+      stockQuantity?: number;
+      imageURL?: string | null;
+      brand?: string | null;
+      model?: string | null;
+      specifications?: string | null;
+      isActive?: boolean;
+    },
+    conn?: PoolConnection
+  ): Promise<number> {
+    const res = await runExecute(
+      `INSERT INTO Product (productName, description, price, stockQuantity, imageURL, brand, model, specifications, isActive)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        data.productName,
+        data.description ?? null,
+        String(data.price),
+        data.stockQuantity ?? 0,
+        data.imageURL ?? null,
+        data.brand ?? null,
+        data.model ?? null,
+        data.specifications ?? null,
+        data.isActive ?? true,
+      ],
+      conn
+    );
+    return res.insertId;
   },
 
   async update(productID: string, data: Partial<Product>): Promise<void> {

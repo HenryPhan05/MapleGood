@@ -8,11 +8,7 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-<<<<<<< HEAD
-import { auth } from "../../../lib/firebase";
-=======
-
->>>>>>> 82a5a2ff02d1d86e3788efefb51cebbd1d4f89eb
+import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 const signUpSchema = z.object({

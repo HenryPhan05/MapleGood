@@ -102,6 +102,10 @@ export const catalogService = {
     return productDao.list(limit, offset, activeOnly);
   },
 
+  async searchProducts(query: string, limit: number, offset: number) {
+    return productDao.search(query, limit, offset);
+  },
+
   async getProduct(productID: number) {
     const row = await productDao.findById(productID);
     if (!row) throw new HttpError(404, "Product not found");

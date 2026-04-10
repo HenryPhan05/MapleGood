@@ -1,71 +1,75 @@
 "use client";
 
 import { Filter, ChevronDown } from "lucide-react";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 import NavigationBarApp from "../components/NavigationBarApp";
 import ProductCard, { type ProductCardProps } from "../components/ProductCard";
 
 const ACCENT = "#E0A800";
 
-const DEMO_PRODUCTS: ProductCardProps[] = [
-  {
-    id: "1",
-    categoryLabel: "CAR SCREENS",
-    title:
-      'Ultra-HD 10" Wireless Apple CarPlay & Android Auto touchscreen receiver',
-    price: 249.99,
-    rating: 4.9,
-    imageSrc:
-      "https://images.unsplash.com/photo-1619400139519-43d8f8f5e0c0?w=800&q=80",
-    imageAlt: "Car touchscreen display",
-  },
-  {
-    id: "2",
-    categoryLabel: "SPEAKERS",
-    title: 'Premium 6.5" Component Speaker System - 300W Peak',
-    price: 129.5,
-    rating: 4.7,
-    imageSrc:
-      "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800&q=80",
-    imageAlt: "Car speakers",
-  },
-  {
-    id: "3",
-    categoryLabel: "CAR SCREENS",
-    title: "Toyota Matrix 2003 - 2008 dash kit & screen bundle",
-    price: 189.0,
-    rating: 4.8,
-    imageSrc:
-      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800&q=80",
-    imageAlt: "Car interior screen",
-  },
-  {
-    id: "4",
-    categoryLabel: "DASH CAMS",
-    title: "4K Front & Rear Dash Cam with Night Vision & GPS",
-    price: 189.0,
-    rating: 4.8,
-    imageSrc:
-      "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800&q=80",
-    imageAlt: "Dash camera",
-  },
-];
-
 function ProductsListingContent() {
   const searchParams = useSearchParams();
   const queryParam = searchParams.get("q")?.trim() ?? "";
-  const resultLabel = queryParam || "Car Electronics";
+  const resultLabel = queryParam || "All Products";
+
+  const [products, setProducts] = useState<ProductCardProps[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("rating");
 
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const snapshot = await getDocs(collection(db, "products"));
+      const allProducts: ProductCardProps[] = snapshot.docs.map((doc) => {
+        const d = doc.data();
+        return {
+          id: doc.id,
+          categoryLabel: d.brand ?? "PRODUCT",
+          title: d.productName ?? "",
+          price: Number(d.price ?? 0),
+          rating: Number(d.rating ?? 0),
+          imageSrc: d.imageURL || "/images/products/placeholder.png",
+          imageAlt: d.productName ?? "",
+        };
+      });
+
+      if (queryParam) {
+        const q = queryParam.toLowerCase();
+        const filtered = allProducts.filter(
+          (p) =>
+            p.title.toLowerCase().includes(q) ||
+            p.categoryLabel.toLowerCase().includes(q)
+        );
+        setProducts(filtered);
+      } else {
+        setProducts(allProducts);
+      }
+    } catch {
+      setError("Failed to load products. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [queryParam]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
   const filtered = useMemo(() => {
-    const min = minPrice === "" ? null : Number(minPrice.replace(/[^0-9.]/g, ""));
-    const max = maxPrice === "" ? null : Number(maxPrice.replace(/[^0-9.]/g, ""));
-    let list = [...DEMO_PRODUCTS];
+    const min =
+      minPrice === "" ? null : Number(minPrice.replace(/[^0-9.]/g, ""));
+    const max =
+      maxPrice === "" ? null : Number(maxPrice.replace(/[^0-9.]/g, ""));
+    let list = [...products];
     if (min !== null && Number.isFinite(min)) {
       list = list.filter((p) => p.price >= min);
     }
@@ -80,12 +84,12 @@ function ProductsListingContent() {
       list.sort((a, b) => b.rating - a.rating);
     }
     return list;
-  }, [minPrice, maxPrice, sort]);
+  }, [products, minPrice, maxPrice, sort]);
 
   return (
     <>
       <div className="sticky top-0 z-50">
-        <NavigationBarApp initialSearchQuery={queryParam} />
+        <NavigationBarApp />
       </div>
 
       <main className="min-h-screen bg-gray-50 pb-16">
@@ -150,10 +154,23 @@ function ProductsListingContent() {
             </button>
           </section>
 
-          {filtered.length === 0 ? (
-            <p className="rounded-lg bg-gray-100 p-6 text-center text-gray-700">
-              No products match your filters. Try adjusting min/max price.
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-[#E0A800]" />
+            </div>
+          ) : error ? (
+            <p className="rounded-lg bg-red-50 p-6 text-center text-red-600">
+              {error}
             </p>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl bg-white p-16 shadow-sm border border-gray-200">
+              <p className="text-2xl font-bold text-gray-800 mb-2">Product Not Found</p>
+              <p className="text-gray-500">
+                {queryParam
+                  ? `No products match "${queryParam}". Try a different search term.`
+                  : "No products match your filters. Try adjusting min/max price."}
+              </p>
+            </div>
           ) : (
             <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((product) => (
