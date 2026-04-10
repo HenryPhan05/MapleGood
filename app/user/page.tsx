@@ -42,7 +42,7 @@ export default function homepageUser() {
   const sampleProductsData = [
     {
       id: "1",
-      name: "Mapple Guard 4K",
+      name: "Maple Guard 4K",
       category: "Car Screens",
       price: 249.99,
       description: "Dual-channel dash cam",
@@ -105,28 +105,33 @@ export default function homepageUser() {
           >
             Categories
           </h1>
-          <div className="mt-10 flex flex-row justify-evenly">
-            {sampleCategoriesData.map((category) => (
-              <div
-                key={category.id}
-                className="flex h-100 w-100 flex-col items-center rounded-2xl bg-white hover:cursor-pointer hover:opacity-70"
-              >
-                <Image
-                  src={category.image}
-                  alt={category.name}
-                  width={300}
-                  height={300}
-                  className="ml-10 mr-10 mt-10"
-                />
-                <p className="mt-2 text-center text-2xl font-bold text-black">
-                  {category.name}
-                </p>
-              </div>
-            ))}
+          <div className="m-5 flex flex-row justify-center gap-8">
+            <div className="m-5 flex flex-row justify-evenly gap-4">
+              {sampleCategoriesData.map((category) => (
+                <div
+                  key={category.id}
+                  className="flex h-100 w-75 flex-col items-center rounded-2xl bg-white hover:cursor-pointer hover:opacity-70"
+                >
+                  <Image
+                    src={category.image}
+                    alt={category.name}
+                    width={250}
+                    height={250}
+                    className="m-10"
+                  />
+                  <div className="text-center">
+                    <p className=" text-center text-2xl font-bold text-black">
+                      {category.name}
+                    </p>
+                  </div>
+                  
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="m-10">
+        <div>
           <h1
             className="ml-5 mt-20 text-4xl font-extrabold"
             style={{ color: "#E8A800" }}
@@ -136,18 +141,18 @@ export default function homepageUser() {
           <p className="ml-5 mt-2 text-xm italic text-gray-500">
             The most popular upgrades for modern vehicles
           </p>
-          <div className="mt-5 flex flex-row justify-center gap-8">
+          <div className="m-5 flex flex-row justify-center gap-8">
             <ArrowLeft
               size={50}
               color={"black"}
               className="mt-50 rounded-full p-3 hover:cursor-pointer hover:opacity-90"
               style={{ backgroundColor: "#E8A800" }}
             />
-            <div className="flex flex-row justify-between gap-10">
+            <div className="mr-5 ml-5 flex flex-row justify-between gap-4">
               {sampleProductsData.map((product) => (
                 <div
                   key={product.id}
-                  className="flex w-[350px] flex-col items-center rounded-2xl bg-white pb-3"
+                  className="flex w-75 flex-col items-center rounded-2xl bg-white pb-3"
                 >
                   <Image
                     src={product.image}
@@ -165,7 +170,7 @@ export default function homepageUser() {
                       ${product.price.toFixed(2)}
                     </p>
                     <div className="mr-3 mt-3 flex flex-row gap-1">
-                      <p className="mt-3 text-xm text-black">{product.rate}</p>
+                      <p className="ml-3 mt-3 text-xm text-black">{product.rate}</p>
                       <StarRating rate={product.rate} />
                     </div>
                   </div>
