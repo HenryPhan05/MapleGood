@@ -16,10 +16,10 @@ export default function NavigationBarApp() {
         </Link>
 
 
-        <div className="flex-shrink-0 leading-tight mr-20">
+        <Link href="/user" className="flex-shrink-0 leading-tight mr-20">
           <p className="text-black font-extrabold text-3xl">Maple</p>
           <p className="text-white font-bold  text-3xl pl-3">Goods</p>
-        </div>
+        </Link>
 
         <div className="flex items-center bg-white rounded-xl px-4 py-2 w-120 h-13 flex-shrink-0 mr-90">
           <Search className="text-gray-500" size={20} />
