@@ -3,6 +3,8 @@
 import { Filter, ChevronDown } from "lucide-react";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 import NavigationBarApp from "../components/NavigationBarApp";
 import ProductCard, { type ProductCardProps } from "../components/ProductCard";
@@ -26,32 +28,31 @@ function ProductsListingContent() {
     setLoading(true);
     setError("");
     try {
-      const url = queryParam
-        ? `/api/products?q=${encodeURIComponent(queryParam)}&limit=50`
-        : `/api/products?limit=50`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to fetch products");
-      const data = await res.json();
-      const rows = data.data ?? data;
-      const mapped: ProductCardProps[] = (Array.isArray(rows) ? rows : []).map(
-        (p: {
-          productID: number;
-          productName: string;
-          price: string | number;
-          brand?: string | null;
-          imageURL?: string | null;
-          description?: string | null;
-        }) => ({
-          id: String(p.productID),
-          categoryLabel: p.brand ?? "PRODUCT",
-          title: p.productName,
-          price: Number(p.price),
-          rating: 0,
-          imageSrc: p.imageURL || "/images/products/placeholder.png",
-          imageAlt: p.productName,
-        })
-      );
-      setProducts(mapped);
+      const snapshot = await getDocs(collection(db, "products"));
+      const allProducts: ProductCardProps[] = snapshot.docs.map((doc) => {
+        const d = doc.data();
+        return {
+          id: doc.id,
+          categoryLabel: d.brand ?? "PRODUCT",
+          title: d.productName ?? "",
+          price: Number(d.price ?? 0),
+          rating: Number(d.rating ?? 0),
+          imageSrc: d.imageURL || "/images/products/placeholder.png",
+          imageAlt: d.productName ?? "",
+        };
+      });
+
+      if (queryParam) {
+        const q = queryParam.toLowerCase();
+        const filtered = allProducts.filter(
+          (p) =>
+            p.title.toLowerCase().includes(q) ||
+            p.categoryLabel.toLowerCase().includes(q)
+        );
+        setProducts(filtered);
+      } else {
+        setProducts(allProducts);
+      }
     } catch {
       setError("Failed to load products. Please try again.");
     } finally {

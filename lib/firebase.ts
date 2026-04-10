@@ -21,4 +21,7 @@ const app = initializeApp(firebaseConfig);
 import { getAuth } from "firebase/auth";
 const auth = getAuth(app);
 
-export { app, auth };
+import { getFirestore } from "firebase/firestore";
+const db = getFirestore(app);
+
+export { app, auth, db };
