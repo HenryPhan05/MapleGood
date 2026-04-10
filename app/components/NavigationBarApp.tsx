@@ -23,6 +23,7 @@ export default function NavigationBarApp({
   const pathname = usePathname();
   const onContactPage = pathname === "/contact";
   const onCartPage = pathname === "/user/cart";
+  const onWishlistPage = pathname === "/wishlist";
   const [search, setSearch] = useState(initialSearchQuery);
   const [authReady, setAuthReady] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -143,12 +144,16 @@ export default function NavigationBarApp({
         </div>
 
         <div className="ml-auto flex flex-wrap items-center gap-2 sm:ml-0 sm:gap-3">
-          <button
-            type="button"
-            className="whitespace-nowrap rounded-xl bg-black px-6 py-2.5 text-base font-semibold text-white hover:cursor-pointer hover:opacity-80 sm:px-8 sm:py-3.5 sm:text-lg"
+          <Link
+            href="/wishlist"
+            className={`whitespace-nowrap rounded-xl px-6 py-2.5 text-base font-semibold transition hover:opacity-90 sm:px-8 sm:py-3.5 sm:text-lg ${
+              onWishlistPage
+                ? "bg-white text-black ring-2 ring-black"
+                : "bg-black text-white hover:cursor-pointer hover:opacity-80"
+            }`}
           >
             Wishlist
-          </button>
+          </Link>
           <Link
             href="/contact"
             className={`whitespace-nowrap rounded-xl px-6 py-2.5 text-base font-semibold transition hover:opacity-90 sm:px-8 sm:py-3.5 sm:text-lg ${
