@@ -1,86 +1,59 @@
-import type { PoolConnection } from "mysql2/promise";
+import { db } from "@/lib/firebase-admin";
+import type { CategoryRow } from "@/types/db"; // You may want to rename 'CategoryRow' to 'Category' in your types
 
-import { runExecute, runQuery } from "@/lib/dao/runner";
-import type { CategoryRow } from "@/types/db";
+const collection = db.collection("categories");
 
 export const categoryDao = {
-  async findById(
-    categoryID: number,
-    conn?: PoolConnection
-  ): Promise<CategoryRow | null> {
-    const rows = await runQuery<CategoryRow[]>(
-      "SELECT * FROM Category WHERE categoryID = ? AND isDeleted = FALSE LIMIT 1",
-      [categoryID],
-      conn
-    );
-    return rows[0] ?? null;
+  async findById(categoryID: string): Promise<CategoryRow | null> {
+    const doc = await collection.doc(categoryID).get();
+    if (!doc.exists) return null;
+    
+    const data = doc.data() as CategoryRow;
+    if (data.isDeleted) return null;
+    
+    return { ...data, categoryID: doc.id };
   },
 
-  async list(limit: number, offset: number, conn?: PoolConnection) {
-    return runQuery<CategoryRow[]>(
-      "SELECT * FROM Category WHERE isDeleted = FALSE ORDER BY categoryID ASC LIMIT ? OFFSET ?",
-      [limit, offset],
-      conn
-    );
+  async list(limit: number, offset: number): Promise<CategoryRow[]> {
+    const snapshot = await collection
+      .where("isDeleted", "==", false)
+      // Note: Firestore string sorting is lexicographical
+      .orderBy("__name__", "asc") 
+      .offset(offset)
+      .limit(limit)
+      .get();
+      
+    return snapshot.docs.map(doc => ({ ...doc.data(), categoryID: doc.id } as CategoryRow));
   },
 
-  async insert(
-    data: {
-      categoryName: string;
-      description?: string | null;
-      parentCategoryID?: number | null;
-    },
-    conn?: PoolConnection
-  ): Promise<number> {
-    const res = await runExecute(
-      "INSERT INTO Category (categoryName, description, parentCategoryID) VALUES (?, ?, ?)",
-      [
-        data.categoryName,
-        data.description ?? null,
-        data.parentCategoryID ?? null,
-      ],
-      conn
-    );
-    return res.insertId;
+  async insert(data: {
+    categoryName: string;
+    description?: string | null;
+    parentCategoryID?: string | null;
+  }): Promise<string> {
+    const docRef = await collection.add({
+      categoryName: data.categoryName,
+      description: data.description ?? null,
+      parentCategoryID: data.parentCategoryID ?? null,
+      isDeleted: false,
+    });
+    return docRef.id;
   },
 
   async update(
-    categoryID: number,
+    categoryID: string,
     data: Partial<{
       categoryName: string;
       description: string | null;
-      parentCategoryID: number | null;
-    }>,
-    conn?: PoolConnection
+      parentCategoryID: string | null;
+    }>
   ): Promise<void> {
-    const fields: string[] = [];
-    const values: unknown[] = [];
-    if (data.categoryName !== undefined) {
-      fields.push("categoryName = ?");
-      values.push(data.categoryName);
-    }
-    if (data.description !== undefined) {
-      fields.push("description = ?");
-      values.push(data.description);
-    }
-    if (data.parentCategoryID !== undefined) {
-      fields.push("parentCategoryID = ?");
-      values.push(data.parentCategoryID);
-    }
-    if (!fields.length) return;
-    values.push(categoryID);
-    await runExecute(
-      `UPDATE Category SET ${fields.join(", ")} WHERE categoryID = ? AND isDeleted = FALSE`,
-      values,
-      conn
-    );
+    if (Object.keys(data).length === 0) return;
+    
+    await collection.doc(categoryID).update(data);
   },
 
-  async softDelete(categoryID: number, conn?: PoolConnection): Promise<void> {
-    await runExecute(
-      "UPDATE Category SET isDeleted = TRUE WHERE categoryID = ?",
-      [categoryID],
-      conn
-    );
+  async softDelete(categoryID: string): Promise<void> {
+    await collection.doc(categoryID).update({ isDeleted: true });
   },
 };

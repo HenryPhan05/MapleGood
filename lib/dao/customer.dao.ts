@@ -1,132 +1,67 @@
-import type { PoolConnection } from "mysql2/promise";
-
-import { runExecute, runQuery } from "@/lib/dao/runner";
+import { db } from "@/lib/firebase-admin";
 import type { CustomerRow } from "@/types/db";
 
+const collection = db.collection("customers");
+
 export const customerDao = {
-  async findById(
-    customerID: number,
-    conn?: PoolConnection
-  ): Promise<CustomerRow | null> {
-    const rows = await runQuery<CustomerRow[]>(
-      "SELECT * FROM Customer WHERE customerID = ? AND isDeleted = FALSE LIMIT 1",
-      [customerID],
-      conn
-    );
-    return rows[0] ?? null;
+  async findById(customerID: string): Promise<CustomerRow | null> {
+    const doc = await collection.doc(customerID).get();
+    if (!doc.exists) return null;
+    
+    const data = doc.data() as CustomerRow;
+    if (data.isDeleted) return null;
+    
+    return { ...data, customerID: doc.id };
   },
 
-  async findByEmail(
-    email: string,
-    conn?: PoolConnection
-  ): Promise<CustomerRow | null> {
-    const rows = await runQuery<CustomerRow[]>(
-      "SELECT * FROM Customer WHERE email = ? AND isDeleted = FALSE LIMIT 1",
-      [email],
-      conn
-    );
-    return rows[0] ?? null;
+  async findByEmail(email: string): Promise<CustomerRow | null> {
+    const snapshot = await collection
+      .where("email", "==", email)
+      .where("isDeleted", "==", false)
+      .limit(1)
+      .get();
+      
+    if (snapshot.empty) return null;
+    
+    const doc = snapshot.docs[0];
+    return { ...doc.data(), customerID: doc.id } as CustomerRow;
   },
 
-  async list(
-    limit: number,
-    offset: number,
-    conn?: PoolConnection
-  ): Promise<CustomerRow[]> {
-    return runQuery<CustomerRow[]>(
-      "SELECT customerID, firstName, lastName, email, phone, address, city, province, postalCode, country, role, isDeleted, createdAt, updatedAt FROM Customer WHERE isDeleted = FALSE ORDER BY customerID DESC LIMIT ? OFFSET ?",
-      [limit, offset],
-      conn
-    );
+  async list(limit: number, offset: number): Promise<CustomerRow[]> {
+    const snapshot = await collection
+      .where("isDeleted", "==", false)
+      .orderBy("createdAt", "desc")
+      .offset(offset)
+      .limit(limit)
+      .get();
+      
+    return snapshot.docs.map(doc => ({ ...doc.data(), customerID: doc.id } as CustomerRow));
   },
 
-  async insert(
-    data: {
-      firstName: string;
-      lastName: string;
-      email: string;
-      phone?: string | null;
-      password: string;
-      address?: string | null;
-      city?: string | null;
-      province?: string | null;
-      postalCode?: string | null;
-      country?: string | null;
-      role?: string | null;
-    },
-    conn?: PoolConnection
-  ): Promise<number> {
-    const res = await runExecute(
-      `INSERT INTO Customer (firstName, lastName, email, phone, password, address, city, province, postalCode, country, role)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        data.firstName,
-        data.lastName,
-        data.email,
-        data.phone ?? null,
-        data.password,
-        data.address ?? null,
-        data.city ?? null,
-        data.province ?? null,
-        data.postalCode ?? null,
-        data.country ?? "Canada",
-        data.role ?? "CUSTOMER",
-      ],
-      conn
-    );
-    return res.insertId;
+  async insert(data: Partial<CustomerRow>): Promise<string> {
+    const now = new Date();
+    const docRef = await collection.add({
+      ...data,
+      country: data.country ?? "Canada",
+      role: data.role ?? "CUSTOMER",
+      isDeleted: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return docRef.id;
   },
 
-  async update(
-    customerID: number,
-    data: Partial<{
-      firstName: string;
-      lastName: string;
-      phone: string | null;
-      address: string | null;
-      city: string | null;
-      province: string | null;
-      postalCode: string | null;
-      country: string | null;
-      role: string | null;
-      password: string;
-    }>,
-    conn?: PoolConnection
-  ): Promise<void> {
-    const fields: string[] = [];
-    const values: unknown[] = [];
-    const map: Record<string, unknown> = {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phone,
-      address: data.address,
-      city: data.city,
-      province: data.province,
-      postalCode: data.postalCode,
-      country: data.country,
-      role: data.role,
-      password: data.password,
-    };
-    for (const [k, v] of Object.entries(map)) {
-      if (v !== undefined) {
-        fields.push(`${k} = ?`);
-        values.push(v);
-      }
-    }
-    if (!fields.length) return;
-    values.push(customerID);
-    await runExecute(
-      `UPDATE Customer SET ${fields.join(", ")} WHERE customerID = ? AND isDeleted = FALSE`,
-      values,
-      conn
-    );
+  async update(customerID: string, data: Partial<CustomerRow>): Promise<void> {
+    await collection.doc(customerID).update({
+      ...data,
+      updatedAt: new Date()
+    });
   },
 
-  async softDelete(customerID: number, conn?: PoolConnection): Promise<void> {
-    await runExecute(
-      "UPDATE Customer SET isDeleted = TRUE WHERE customerID = ?",
-      [customerID],
-      conn
-    );
+  async softDelete(customerID: string): Promise<void> {
+    await collection.doc(customerID).update({ 
+      isDeleted: true,
+      updatedAt: new Date()
+    });
   },
 };
