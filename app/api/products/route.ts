@@ -9,6 +9,11 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const { limit, offset } = parsePagination(searchParams);
+    const q = searchParams.get("q")?.trim() ?? "";
+    if (q) {
+      const data = await catalogService.searchProducts(q, limit, offset);
+      return jsonOk(data);
+    }
     const activeOnly = searchParams.get("activeOnly") !== "false";
     const data = await catalogService.listProducts(limit, offset, activeOnly);
     return jsonOk(data);

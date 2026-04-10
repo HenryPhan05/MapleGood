@@ -42,7 +42,7 @@ export default function NavigationBarApp() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      console.log("Searching for:", searchQuery);
+      router.push(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 

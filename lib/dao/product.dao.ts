@@ -32,6 +32,20 @@ export const productDao = {
     );
   },
 
+  async search(
+    query: string,
+    limit: number,
+    offset: number,
+    conn?: PoolConnection
+  ): Promise<ProductRow[]> {
+    const pattern = `%${query}%`;
+    return runQuery<ProductRow[]>(
+      `SELECT * FROM Product WHERE isDeleted = FALSE AND isActive = TRUE AND (productName LIKE ? OR brand LIKE ? OR description LIKE ?) ORDER BY productID DESC LIMIT ? OFFSET ?`,
+      [pattern, pattern, pattern, limit, offset],
+      conn
+    );
+  },
+
   async insert(
     data: {
       productName: string;
