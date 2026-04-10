@@ -28,9 +28,12 @@ function ProductsListingContent() {
     setLoading(true);
     setError("");
     try {
+      console.log("Fetching from Firestore collection 'products'...");
       const snapshot = await getDocs(collection(db, "products"));
+      console.log("Firestore returned", snapshot.size, "documents");
       const allProducts: ProductCardProps[] = snapshot.docs.map((doc) => {
         const d = doc.data();
+        console.log("Document:", doc.id, d);
         return {
           id: doc.id,
           categoryLabel: d.brand ?? "PRODUCT",
@@ -53,7 +56,8 @@ function ProductsListingContent() {
       } else {
         setProducts(allProducts);
       }
-    } catch {
+    } catch (err) {
+      console.error("Firestore fetch error:", err);
       setError("Failed to load products. Please try again.");
     } finally {
       setLoading(false);
