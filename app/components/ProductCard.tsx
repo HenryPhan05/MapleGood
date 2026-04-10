@@ -2,6 +2,7 @@
 
 import { Star, Check } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { UseCartStore } from "@/app/products/cartStore";
 
@@ -46,7 +47,8 @@ export default function ProductCard({
     setTimeout(() => setAdded(false), 1500);
   };
   return (
-    <article className="flex flex-col rounded-xl bg-white shadow-md overflow-hidden border border-gray-100">
+    <Link href={`/products/${id}`} className="block">
+    <article className="flex flex-col rounded-xl bg-white shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow cursor-pointer">
       <div className="relative aspect-4/3 w-full bg-gray-100">
         <Image
           src={imageSrc}
@@ -89,5 +91,6 @@ export default function ProductCard({
         </button>
       </div>
     </article>
+    </Link>
   );
 }
