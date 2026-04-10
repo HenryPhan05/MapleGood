@@ -1,4 +1,4 @@
-export default function StarRating({ rate }) {
+export default function StarRating({ rate }: { rate: number }) {
   return (
     <div className="flex flex-row gap-0.5 mt-2 ml-1">
       {[1, 2, 3, 4, 5].map((star) => {

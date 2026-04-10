@@ -1,25 +1,47 @@
+import { FaFacebook } from "react-icons/fa";
+
 export default function Footer() {
   return (
-    <div className="bg-black flex flex-row p-10 justify-around"  >
-      <div className="flex flex-col">
-        <button className="p-2 bg-blue-600 w-10 h-10 text-center text-2xl font-extrabold rounded-full mb-5">f</button>
-        <p className="text-gray-500 mb-1">Pioneering the future of in-car</p>
-        <p className="text-gray-500 mb-1" >entertainment. We provide high-end,</p>
-        <p className="text-gray-500 mb-1">reliable electronics that transform your</p>
-        <p className="text-gray-500 mb-1">daily commute into a premium driving</p>
-        <p className="text-gray-500 mb-1" >experience</p>
+    <footer className="bg-black px-6 py-12 sm:px-10 lg:px-16">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 md:grid-cols-3 md:gap-10 lg:gap-20">
+        <div className="flex flex-col">
+          <a
+            href="https://facebook.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mb-6 inline-flex w-fit text-white transition hover:opacity-80"
+            aria-label="Facebook"
+          >
+            <FaFacebook className="h-8 w-8" />
+          </a>
+          <p className="text-sm leading-relaxed text-gray-400 sm:text-base">
+            Pioneering the future of in-car entertainment. We provide
+            high-end, reliable electronics that transform your daily commute into
+            a premium driving experience.
+          </p>
+        </div>
+
+        <div>
+          <h2 className="text-lg font-bold text-white sm:text-xl">Top Products</h2>
+          <div className="mt-3 border-b border-gray-600" aria-hidden />
+          <ul className="mt-5 space-y-4 text-sm text-gray-400 sm:text-base">
+            <li>Speaker</li>
+            <li>Headphone</li>
+            <li>Dash Cams</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-lg font-bold text-white sm:text-xl">
+            Top Categories
+          </h2>
+          <div className="mt-3 border-b border-gray-600" aria-hidden />
+          <ul className="mt-5 space-y-4 text-sm text-gray-400 sm:text-base">
+            <li>Car electronics</li>
+            <li>Accessories</li>
+          </ul>
+        </div>
       </div>
-      <div>
-        <h1 className="text-white font-bold text-xl mb-5">Top Products</h1>
-        <p className="text-gray-500 mb-5">Speakers</p>
-        <p className="text-gray-500 mb-5">Headphones</p>
-        <p className="text-gray-500 mb-5">DashCams</p>
-      </div>
-      <div>
-        <h1 className="text-white font-bold text-xl mb-5">Top Categories</h1>
-        <p className="text-gray-500 mb-10">Car Electronics</p>
-        <p className="text-gray-500 mb-10">Accessories</p>
-      </div>
-    </div >
-  )
+    </footer>
+  );
 }

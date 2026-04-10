@@ -83,8 +83,8 @@ export default function CartPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <h1 className="text-4xl font-extrabold mb-8" style={{ color: "#E8A800" }}>
-          Shopping Cart
+        <h1 className="mb-8 text-4xl font-extrabold" style={{ color: "#E0A800" }}>
+          Your Cart
         </h1>
 
         {cartItems.length === 0 ? (

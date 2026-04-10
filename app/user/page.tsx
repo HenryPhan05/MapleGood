@@ -1,6 +1,5 @@
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import StarRating from "../components/StarRating";
-import LogoutButton from "../components/LogoutButton";
 import NavigationBarApp from "../components/NavigationBarApp";
 import Image from "next/image";
 import carAccessoriesImage from "../public/images/categories/carAccessories.png";
@@ -10,14 +9,14 @@ import phoneAccessoriesImage from "../public/images/categories/phoneAccessories.
 import headphoneImage from "../public/images/products/headphone.png";
 import phoneImage from "../public/images/products/phone.png";
 import speakerImage from "../public/images/products/speaker.png";
-import { int } from "zod";
 import Footer from "../components/Footer";
+
 export default function homepageUser() {
   const sampleCategoriesData = [
     {
       id: "1",
       name: "Car Accessories",
-      image: carAccessoriesImage
+      image: carAccessoriesImage,
     },
     {
       id: "2",
@@ -33,12 +32,12 @@ export default function homepageUser() {
       id: "4",
       name: "Audio Equipment",
       image: othersImage,
-    }
-    , {
+    },
+    {
       id: "5",
       name: "Others",
       image: speakerImage,
-    }
+    },
   ];
   const sampleProductsData = [
     {
@@ -49,13 +48,13 @@ export default function homepageUser() {
       description: "Dual-channel dash cam",
       quantity: 3,
       image: carElectronicsImage,
-      rate: 4
+      rate: 4,
     },
     {
       id: "2",
       name: "Precision X1 Radar",
       category: "Audio Equipment",
-      price: 299.00,
+      price: 299.0,
       description: "Long-range 360 radar detection",
       quantity: 10,
       image: headphoneImage,
@@ -69,7 +68,7 @@ export default function homepageUser() {
       description: "wireless smartphone integration",
       quantity: 3,
       image: phoneImage,
-      rate: 4
+      rate: 4,
     },
     {
       id: "4",
@@ -79,7 +78,7 @@ export default function homepageUser() {
       description: "High-fidelity 3-way speaker system",
       quantity: 3,
       image: phoneAccessoriesImage,
-      rate: 4
+      rate: 4,
     },
     {
       id: "5",
@@ -89,55 +88,104 @@ export default function homepageUser() {
       description: "High-fidelity 3-way speaker system",
       quantity: 3,
       image: speakerImage,
-      rate: 4
-    }
-  ]
+      rate: 4,
+    },
+  ];
   return (
-    <div className="bg-gray-100 min-h-screen w-full">
+    <div className="min-h-screen w-full bg-gray-100">
       <div className="sticky top-0 bg-white" style={{ zIndex: 1000 }}>
         <NavigationBarApp />
       </div>
       {/**main */}
       <div>
         <div>
-          <h1 className="mt-20 ml-5 text-4xl font-extrabold" style={{ color: "#E8A800" }}>Categories</h1>
-          <div className="flex flex-row justify-evenly mt-10" >
+          <h1
+            className="ml-5 mt-20 text-4xl font-extrabold"
+            style={{ color: "#E8A800" }}
+          >
+            Categories
+          </h1>
+          <div className="mt-10 flex flex-row justify-evenly">
             {sampleCategoriesData.map((category) => (
-              <div key={category.id} className="bg-white w-100 h-100 flex-col items-center rounded-2xl hover:opacity-70 hover:cursor-pointer">
-                <Image src={category.image} alt={category.name} width={300} height={300} className="mt-10 mr-10 ml-10" />
-                <p className="text-center text-black text-2xl font-bold mt-2 ">{category.name}</p>
+              <div
+                key={category.id}
+                className="flex h-100 w-100 flex-col items-center rounded-2xl bg-white hover:cursor-pointer hover:opacity-70"
+              >
+                <Image
+                  src={category.image}
+                  alt={category.name}
+                  width={300}
+                  height={300}
+                  className="ml-10 mr-10 mt-10"
+                />
+                <p className="mt-2 text-center text-2xl font-bold text-black">
+                  {category.name}
+                </p>
               </div>
             ))}
           </div>
         </div>
 
         <div className="m-10">
-          <h1 className="mt-20 ml-5 text-4xl font-extrabold" style={{ color: "#E8A800" }}>Popular</h1>
-          <p className="text-gray-500 ml-5 mt-2 italic text-xm">The most popular upgrades for modern vehicles</p>
+          <h1
+            className="ml-5 mt-20 text-4xl font-extrabold"
+            style={{ color: "#E8A800" }}
+          >
+            Popular
+          </h1>
+          <p className="ml-5 mt-2 text-xm italic text-gray-500">
+            The most popular upgrades for modern vehicles
+          </p>
           <div className="mt-5 flex flex-row justify-center gap-8">
-            <ArrowLeft size={50} color={'black'} className="p-3 rounded-full mt-50 hover:cursor-pointer hover:opacity-90" style={{ backgroundColor: "#E8A800" }} />
-            <div className="flex flex-row justify-between gap-10 ">
+            <ArrowLeft
+              size={50}
+              color={"black"}
+              className="mt-50 rounded-full p-3 hover:cursor-pointer hover:opacity-90"
+              style={{ backgroundColor: "#E8A800" }}
+            />
+            <div className="flex flex-row justify-between gap-10">
               {sampleProductsData.map((product) => (
-                <div key={product.id} className="bg-white w-[350px] pb-3  flex-col items-center rounded-2xl">
-                  <Image src={product.image} alt={product.name} width={250} height={250} className="mt-10 mr-10 ml-10" />
-                  <h1 className="mt-5 ml-1 text-black text-xl font-bold hover:underline hover:cursor-pointer">{product.name}</h1>
-                  <p className="mt-1 ml-1 text-gray-500">{product.description}</p>
+                <div
+                  key={product.id}
+                  className="flex w-[350px] flex-col items-center rounded-2xl bg-white pb-3"
+                >
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    width={250}
+                    height={250}
+                    className="ml-10 mr-10 mt-10"
+                  />
+                  <h1 className="ml-1 mt-5 cursor-pointer text-xl font-bold text-black hover:underline">
+                    {product.name}
+                  </h1>
+                  <p className="ml-1 mt-1 text-gray-500">{product.description}</p>
                   <div className="flex flex-row justify-between">
-                    <p className="mt-5 ml-1 text-2xl text-black font-bold">${product.price.toFixed(2)}</p>
-                    <div className="flex flex-row gap-1 mr-3 mt-3">
-                      <p className="text-black text-xm mt-3">{product.rate}</p>
+                    <p className="ml-1 mt-5 text-2xl font-bold text-black">
+                      ${product.price.toFixed(2)}
+                    </p>
+                    <div className="mr-3 mt-3 flex flex-row gap-1">
+                      <p className="mt-3 text-xm text-black">{product.rate}</p>
                       <StarRating rate={product.rate} />
                     </div>
                   </div>
-                  <button className="text-black mt-1 ml-1 p-3 rounded-2xl hover:opacity-80 hover:cursor-pointer font-bold" style={{ backgroundColor: "#E8A800" }}>Add to cart</button>
+                  <button
+                    className="ml-1 mt-1 rounded-2xl p-3 font-bold text-black hover:cursor-pointer hover:opacity-80"
+                    style={{ backgroundColor: "#E8A800" }}
+                  >
+                    Add to cart
+                  </button>
                 </div>
               ))}
             </div>
-            <ArrowRight size={50} color={'black'} className="p-3 rounded-full mt-50 hover:cursor-pointer hover:opacity-80" style={{ backgroundColor: "#E8A800" }} />
+            <ArrowRight
+              size={50}
+              color={"black"}
+              className="mt-50 rounded-full p-3 hover:cursor-pointer hover:opacity-80"
+              style={{ backgroundColor: "#E8A800" }}
+            />
           </div>
-          <div>
-
-          </div>
+          <div></div>
         </div>
         {/**Footer */}
         <div>
@@ -148,6 +196,6 @@ export default function homepageUser() {
         <h1 className="text-2xl font-bold">Hello</h1>
         <LogoutButton />
       </div> */}
-    </div >
+    </div>
   );
 }
