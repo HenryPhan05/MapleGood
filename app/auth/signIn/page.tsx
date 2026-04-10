@@ -6,6 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { auth } from "../../../lib/firebase"; 
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 const loginSchema = z.object({
   email: z.string().email("invalid Email address!"),
@@ -17,8 +20,7 @@ type loginForm = z.infer<typeof loginSchema>
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState<boolean>(true);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [errorMsg, setErrorMsg] = useState();
-  const { control, handleSubmit, formState: { errors } } = useForm<loginForm>({
+  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<loginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
@@ -28,37 +30,20 @@ export default function SignIn() {
   });
   const router = useRouter();
 
-  /* CONNECT DATABASE
-    const onSubmit = async (data: loginForm) => {
-      setApiError(null);
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: data.email, password: data.password }),
-      });
-      const payload = (await res.json().catch(() => ({}))) as {
-        error?: string;
-      };
-      if (!res.ok) {
-        setApiError(payload.error ?? "Sign in failed");
-        return;
-      }
-      router.push("/user");
-      router.refresh();
-    };
-  */
-
-  const onSubmit = (data: loginForm) => {
+  const onSubmit = async (data: loginForm) => {
     setApiError(null);
-    if (data.email === process.env.NEXT_PUBLIC_USEREMAIL && data.password === process.env.NEXT_PUBLIC_USERPASSWORD) {
+    try {
+      await signInWithEmailAndPassword(auth, data.email, data.password);
       router.push("/user");
-    }
-    else {
-      setApiError("Email or Password is incorrect!");
-      return;
+    } catch (error: any) {
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        setApiError("Email or Password is incorrect!");
+      } else {
+        setApiError("Failed to sign in. Please try again.");
+      }
     }
   }
+
   return (
     <>
       <div className="sticky top-0 z-50 bg-white ">
@@ -114,25 +99,34 @@ export default function SignIn() {
                   {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                 </button>
                 {apiError && (
-                  <p className="text-red-600 text-sm font-medium">{apiError}</p>
+                  <p className="text-red-600 text-sm font-medium mt-1">{apiError}</p>
                 )}
               </div>
 
             </div>
 
             <div className="flex flex-row justify-between">
-
               <button
                 type="submit"
-                className=" w-50 h-10 rounded text-black font-bold hover:opacity-70 hover:cursor-pointer " style={{ backgroundColor: "#E0A800" }}
+                disabled={isSubmitting}
+                className="w-50 h-10 rounded text-black font-bold hover:opacity-70 hover:cursor-pointer disabled:opacity-50" 
+                style={{ backgroundColor: "#E0A800" }}
               >
-                Sign In
+                {isSubmitting ? "Signing in..." : "Sign In"}
               </button>
-              <button className="underline font-bold hover:opacity-70 hover:cursor-pointer" style={{ color: "#E0A800" }}>
-                Fotgot password?
+              <button type="button" className="underline font-bold hover:opacity-70 hover:cursor-pointer" style={{ color: "#E0A800" }}>
+                Forgot password?
               </button>
             </div>
-            <button className="w-full h-10 rounded text-black font-bold border-2 hover:opacity-70 hover:cursor-pointer" style={{ borderColor: "#E0A800" }}>Create an account</button>
+            
+            <Link 
+              href="/auth/signUp"
+              className="flex justify-center items-center w-full h-10 rounded text-black font-bold border-2 hover:opacity-70 hover:cursor-pointer" 
+              style={{ borderColor: "#E0A800" }}
+            >
+              Create an account
+            </Link>
+
           </form>
         </div >
       </div >
