@@ -8,11 +8,11 @@ import NavigationBarApp from "../components/NavigationBarApp";
 
 const ACCENT = "#E0A800";
 
-/** 静态联系方式（写死在前端，不从接口读取） */
+/** Static contact block (frontend-only; not loaded from an API). */
 const CONTACT = {
   address: "2640 52 St NE Unit 110A, Calgary, AB T1Y 3R6",
   phoneDisplay: "+1 (403) 402-3813",
-  /** tel: 链接用纯数字 E.164 */
+  /** E.164 format for tel: links */
   phoneTel: "+14034023813",
   email: "maplegoods110@gmail.com",
   intro:

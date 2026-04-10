@@ -3,8 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
-import { Search, ShoppingCart, User } from "lucide-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import {
+  ChevronDown,
+  Home,
+  LayoutDashboard,
+  LogIn,
+  Search,
+  ShoppingCart,
+  User,
+} from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
 
 import { auth } from "@/lib/firebase";
@@ -28,6 +36,8 @@ export default function NavigationBarApp({
   const [authReady, setAuthReady] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [photoURL, setPhotoURL] = useState<string | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setSearch(initialSearchQuery);
@@ -50,6 +60,21 @@ export default function NavigationBarApp({
     });
     return () => unsub();
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(e.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    }
+    if (userMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [userMenuOpen]);
 
   function onSearchSubmit(e: FormEvent) {
     e.preventDefault();
@@ -100,46 +125,92 @@ export default function NavigationBarApp({
               className="h-12 w-28 animate-pulse rounded-lg bg-black/10 sm:h-14 sm:w-36"
               aria-hidden
             />
-          ) : displayName ? (
-            <Link
-              href="/user"
-              className="flex min-w-0 max-w-full items-center gap-2 rounded-lg py-1 pr-1 hover:opacity-90"
-            >
-              {photoURL ? (
-                // eslint-disable-next-line @next/next/no-img-element -- OAuth avatar URLs vary by provider
-                <img
-                  src={photoURL}
-                  alt=""
-                  width={56}
-                  height={56}
-                  referrerPolicy="no-referrer"
-                  className="h-12 w-12 shrink-0 rounded-full border-2 border-white object-cover shadow-sm sm:h-14 sm:w-14"
-                />
-              ) : (
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-white bg-white sm:h-14 sm:w-14">
-                  <User
-                    size={28}
-                    className="text-gray-700 sm:h-9 sm:w-9"
-                    aria-hidden
+          ) : (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((o) => !o)}
+                className="group flex min-w-0 max-w-full items-center gap-1.5 rounded-xl py-1.5 pl-1 pr-2 text-left transition hover:bg-black/5 sm:gap-2 sm:pr-3"
+                aria-expanded={userMenuOpen}
+                aria-haspopup="menu"
+              >
+                {displayName && photoURL ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- OAuth avatar URLs vary by provider
+                  <img
+                    src={photoURL}
+                    alt=""
+                    width={56}
+                    height={56}
+                    referrerPolicy="no-referrer"
+                    className="h-12 w-12 shrink-0 rounded-full border-2 border-white object-cover shadow-sm sm:h-14 sm:w-14"
                   />
+                ) : displayName ? (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-white bg-white sm:h-14 sm:w-14">
+                    <User
+                      size={28}
+                      className="text-gray-700 sm:h-9 sm:w-9"
+                      aria-hidden
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white sm:h-14 sm:w-14">
+                    <User size={28} className="text-gray-700 sm:h-9 sm:w-9" />
+                  </div>
+                )}
+                {displayName ? (
+                  <span className="truncate text-lg font-semibold text-black sm:text-xl">
+                    {displayName}
+                  </span>
+                ) : (
+                  <span className="whitespace-nowrap text-lg font-semibold text-black sm:text-xl">
+                    Sign in
+                  </span>
+                )}
+                <ChevronDown
+                  className={`h-5 w-5 shrink-0 text-black/70 transition-transform duration-200 sm:h-6 sm:w-6 ${userMenuOpen ? "rotate-180" : ""}`}
+                  aria-hidden
+                />
+              </button>
+
+              {userMenuOpen && (
+                <div
+                  className="absolute right-0 top-full z-200 mt-2 w-[min(100vw-2rem,16rem)] min-w-[15rem] overflow-hidden rounded-2xl border border-gray-200/80 bg-white py-1.5 shadow-lg shadow-black/10 ring-1 ring-black/5"
+                  role="menu"
+                >
+                  {displayName ? (
+                    <Link
+                      href="/user"
+                      role="menuitem"
+                      className="mx-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <Home className="h-4 w-4 shrink-0 text-gray-500" aria-hidden />
+                      My account
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/auth/signIn"
+                      role="menuitem"
+                      className="mx-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <LogIn className="h-4 w-4 shrink-0 text-gray-500" aria-hidden />
+                      Sign in
+                    </Link>
+                  )}
+                  <div className="mx-2 my-1.5 h-px bg-gray-100" aria-hidden />
+                  <Link
+                    href="/dashboard"
+                    role="menuitem"
+                    className="mx-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-900 transition hover:bg-amber-50"
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    <LayoutDashboard className="h-4 w-4 shrink-0 text-[#E0A800]" aria-hidden />
+                    Admin dashboard
+                  </Link>
                 </div>
               )}
-              <span className="truncate text-xl font-semibold text-black underline decoration-2 underline-offset-4 sm:text-2xl">
-                {displayName}
-              </span>
-            </Link>
-          ) : (
-            <>
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white sm:h-14 sm:w-14">
-                <User size={28} className="text-gray-700 sm:h-9 sm:w-9" />
-              </div>
-              <Link
-                href="/auth/signIn"
-                className="whitespace-nowrap text-xl font-semibold text-black underline decoration-2 underline-offset-4 hover:opacity-80 sm:text-2xl"
-              >
-                Login
-              </Link>
-            </>
+            </div>
           )}
         </div>
 
