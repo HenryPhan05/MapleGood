@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import NavigationBarApp from "../../components/NavigationBarApp";
 import Footer from "../../components/Footer";
-
+import { UseCartStore } from "@/app/products/cartStore";
 import { Trash2, Plus, Minus } from "lucide-react";
 import carElectronicsImage from "../../public/images/categories/carElectronic.png";
 import headphoneImage from "../../public/images/products/headphone.png";
@@ -22,56 +22,11 @@ type CartItem = {
 
 export default function CartPage() {
   // Sample cart data matching the products on the homepage
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: "1",
-      name: "Mapple Guard 4K",
-      category: "Car Screens",
-      price: 249.99,
-      description: "Dual-channel dash cam",
-      quantity: 3,
-      image: carElectronicsImage,
-      rate: 4
-    },
-    {
-      id: "2",
-      name: "Precision X1 Radar",
-      category: "Audio Equipment",
-      price: 299.00,
-      description: "Long-range 360 radar detection",
-      quantity: 10,
-      image: headphoneImage,
-      rate: 4.5,
-    },
-    {
-      id: "3",
-      name: "Connect Pro 10",
-      category: "Phone Accessories",
-      price: 299.99,
-      description: "wireless smartphone integration",
-      quantity: 3,
-      image: phoneImage,
-      rate: 4
-    },
-  ]);
 
-  const updateQuantity = (cartItemID: string, delta: number) => {
-    setCartItems((prev) =>
-      prev.map((item) => {
-        if (item.id === cartItemID) {
-          const newQty = item.quantity + delta;
-          if (newQty < 1) return item;
-          return { ...item, quantity: newQty };
-        }
-        return item;
-      })
-    );
-  };
+  const cartItems = UseCartStore((state) => state.cartItems);
+  const updateQuantity = UseCartStore((state) => state.updateQuantity);
 
-  const removeItem = (cartItemID: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== cartItemID));
-  };
-
+  const removeItem = UseCartStore((state) => state.removeItem);
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const tax = subtotal * 0.13;
   const total = subtotal + tax;
@@ -110,7 +65,7 @@ export default function CartPage() {
             <div className="flex flex-col lg:flex-row gap-8 w-400">
               {/* Cart Items */}
               <div className="flex-1 flex flex-col gap-4">
-                {cartItems.map((item) => (
+                {cartItems.map((item: CartItem) => (
                   <div
                     key={item.id}
                     className="bg-white rounded-2xl p-6 flex items-center gap-6"
