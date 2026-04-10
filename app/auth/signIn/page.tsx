@@ -35,8 +35,9 @@ export default function SignIn() {
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       router.push("/user");
-    } catch (error: any) {
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+    } catch (error: unknown) {
+      const authError = error as { code: string };
+      if (authError.code === 'auth/invalid-credential' || authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password') {
         setApiError("Email or Password is incorrect!");
       } else {
         setApiError("Failed to sign in. Please try again.");

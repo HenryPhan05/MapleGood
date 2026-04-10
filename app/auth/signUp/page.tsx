@@ -55,11 +55,12 @@ export default function SignUpPage() {
       }
 
       router.push("/auth/signIn");
-    } catch (error: any) {
-      if (error.code === 'auth/email-already-in-use') {
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'auth/email-already-in-use') {
         setApiError("An account with this email already exists.");
       } else {
-        setApiError(error.message || "Registration failed. Please try again.");
+        setApiError(err.message || "Registration failed. Please try again.");
       }
     }
   };
