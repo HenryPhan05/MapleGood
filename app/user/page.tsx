@@ -11,7 +11,33 @@ import phoneImage from "../public/images/products/phone.png";
 import speakerImage from "../public/images/products/speaker.png";
 import Footer from "../components/Footer";
 
+
+// add to cart
+import { addToCart, type CartItem } from "./cart/cartService";
+import { useState, useEffect } from "react";
+import { auth } from '@/lib/firebase'
+import type { User } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
+
 export default function homepageUser() {
+  
+    const [user, setUser] = useState<User | null>(null);
+
+    const handleAdd = async (product: CartItem) => {
+    if (!user) {
+      console.log("User not logged in");
+      return;
+    }
+
+    await addToCart(user.uid, product);
+  };
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+    return () => unsub();
+  }, []);
   const sampleCategoriesData = [
     {
       id: "1",
@@ -175,6 +201,7 @@ export default function homepageUser() {
                     </div>
                   </div>
                   <button
+                    onClick={() => handleAdd(product)}
                     className="ml-1 mt-1 rounded-2xl p-3 font-bold text-black hover:cursor-pointer hover:opacity-80"
                     style={{ backgroundColor: "#E8A800" }}
                   >
