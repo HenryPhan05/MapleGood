@@ -8,8 +8,12 @@ import { Search, ShoppingCart, User, LogOut, ChevronDown, LayoutDashboard } from
 import { useState, useRef, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { UseCartStore } from "@/app/products/cartStore";
+
 import logoIcon from "../public/images/logo icon.png";
+// addd to cart
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
 
 const CATEGORIES = [
   "Car devices",
@@ -24,21 +28,28 @@ export default function NavigationBarApp() {
   const [searchQuery, setSearchQuery] = useState("");
   const [displayName, setDisplayName] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const cartItems = UseCartStore((s) => s.cartItems);
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  const [cartCount, setCartCount] = useState(0)
+
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setDisplayName(user.displayName || user.email || "User");
-      } else {
-        setDisplayName("");
+     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        setCartCount(0);
+        return;
       }
+      const cartRef = collection(db, "users", user.uid, "carts");
+      const unsubscribeCart = onSnapshot(cartRef, (snapshot) => {
+        let total = 0;
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          total += data.quantity ?? 0;
+        });
+        setCartCount(total);
+      });
+      return () => unsubscribeCart();
     });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
+    
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
@@ -145,9 +156,11 @@ export default function NavigationBarApp() {
             onClick={() => router.push("/user/cart")}
             className="relative flex flex-col items-center hover:scale-105 transition-transform group cursor-pointer ml-2"
           >
-            <span className="absolute -top-3 text-xl font-extrabold flex items-center justify-center text-black">
-              {cartCount}
-            </span>
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                {cartCount}
+              </span>
+            )}
             <ShoppingCart size={40} className="text-black group-hover:text-gray-800 transition-colors mt-2" />
             <span className="text-lg font-bold text-black group-hover:text-gray-800 transition-colors">
               Cart
