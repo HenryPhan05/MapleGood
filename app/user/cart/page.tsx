@@ -19,18 +19,62 @@ type CartItem = {
   image: any,
   rate: number,
 }
+// add product to cart
+import { getCart, removeFromCart, updateCartItem } from "./cartService";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 export default function CartPage() {
   // Sample cart data matching the products on the homepage
+  const [cartItem, setCartItem] = useState<CartItem[]>([]);
 
   const cartItems = UseCartStore((state) => state.cartItems);
   const updateQuantity = UseCartStore((state) => state.updateQuantity);
-
+  const allItems = Array.from(
+    new Map(
+      [...cartItem, ...cartItems].map(item => [item.id, item])
+    ).values()
+  );
   const removeItem = UseCartStore((state) => state.removeItem);
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = allItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const tax = subtotal * 0.13;
   const total = subtotal + tax;
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const data = await getCart(user.uid);
+        setCartItem(data as CartItem[]);
+      }
+    });
 
+    return () => unsub();
+  }, []);
+  const handleRemove = async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+
+    await removeFromCart(user.uid, id);
+    removeItem(id);
+    setCartItem(prev => prev.filter(item => item.id !== id));
+  }
+  const handleUpdateQuantity = async (id: string, delta: number) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const item = cartItems.find(i => i.id === id) ||
+      cartItem.find(i => i.id === id);
+    if (!item) return;
+
+    const newQuantity = Math.max(1, item.quantity + delta);
+    await updateCartItem(user.uid, id, newQuantity);
+    setCartItem(prev =>
+      prev.map(i =>
+        i.id === id ? { ...i, quantity: newQuantity } : i
+      )
+    );
+    updateQuantity(id, delta);
+  };
   return (
     <div className="bg-gray-100 min-h-screen w-full">
       <div className="sticky top-0 bg-white" style={{ zIndex: 1000 }}>
@@ -42,7 +86,7 @@ export default function CartPage() {
           Your Cart
         </h1>
 
-        {cartItems.length === 0 ? (
+        {allItems.length === 0 ? (
           <div className="bg-white rounded-2xl p-16 text-center">
             <p className="text-2xl text-gray-500 mb-6">Your cart is empty</p>
             <a
@@ -65,9 +109,9 @@ export default function CartPage() {
             <div className="flex flex-col lg:flex-row gap-8 w-400">
               {/* Cart Items */}
               <div className="flex-1 flex flex-col gap-4">
-                {cartItems.map((item: CartItem) => (
+                {allItems.map((item: CartItem, index) => (
                   <div
-                    key={item.id}
+                    key={`${item.id}-${index}`}
                     className="bg-white rounded-2xl p-6 flex items-center gap-6"
                   >
                     {/* Product image placeholder */}
@@ -83,7 +127,10 @@ export default function CartPage() {
                     {/* Quantity controls */}
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => updateQuantity(item.id, -1)}
+                        onClick={() => {
+
+                          handleUpdateQuantity(item.id, -1);
+                        }}
                         className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center hover:bg-gray-300 cursor-pointer"
                       >
                         <Minus size={18} color="black" />
@@ -92,7 +139,10 @@ export default function CartPage() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.id, 1)}
+                        onClick={() => {
+
+                          handleUpdateQuantity(item.id, 1)
+                        }}
                         className="w-10 h-10 rounded  flex items-center justify-center hover:bg-gray-300 cursor-pointer"
                         style={{ backgroundColor: "#E8A800" }}
                       >
@@ -102,7 +152,7 @@ export default function CartPage() {
                     {/**item price */}
                     <div className="text-right w-[100]px">
                       <p className="text-xl font-bold text-gray-400">
-                        ${item.price.toFixed(2)}
+                        ${Number(item.price?.toFixed(2))}
                       </p>
                     </div>
                     {/* Item subtotal */}
@@ -114,7 +164,7 @@ export default function CartPage() {
 
                     {/* Remove button */}
                     <button
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => handleRemove(item.id)}
                       className="text-red-500 hover:text-red-700 cursor-pointer p-2"
                     >
                       <Trash2 size={24} />
