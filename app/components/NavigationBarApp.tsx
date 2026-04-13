@@ -10,6 +10,10 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { UseCartStore } from "@/app/products/cartStore";
 import logoIcon from "../public/images/logo icon.png";
+//add
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 
 const CATEGORIES = [
   "Car devices",
@@ -26,16 +30,31 @@ export default function NavigationBarApp() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const cartItems = UseCartStore((s) => s.cartItems);
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
+  // addhomepage
+  const [cartCountItem, setCartCountItem] = useState(0)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setDisplayName(user.displayName || user.email || "User");
       } else {
         setDisplayName("");
+        setCartCountItem(0);
+        return;
+      }
+
+      const cartRef = collection(db, "users", user.uid, "carts");
+      const unsubscribeCart = onSnapshot(cartRef, (snapshot) => {
+        let total = 0;
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          total += data.quantity ?? 0;
+        });
+        setCartCountItem(total);
+      });
+      return () => {
+        unsubscribe();
       }
     });
-    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -65,10 +84,10 @@ export default function NavigationBarApp() {
 
   return (
     <nav className="bg-[#E8A800] px-5 pt-3 pb-0 font-sans flex flex-col gap-5">
-      <div className="flex items-center justify-between w-full gap-4">        
+      <div className="flex items-center justify-between w-full gap-4">
         <div className="flex pl-22 items-center ml-4">
-          <Link 
-            href="/user" 
+          <Link
+            href="/user"
             className="bg-white rounded-full w-20 h-20 flex items-center justify-center flex-shrink-0 mr-5 hover:scale-105 transition-transform"
           >
             <Image src={logoIcon} alt="Maple Goods Logo" width={60} height={60} />
@@ -96,7 +115,7 @@ export default function NavigationBarApp() {
         </div>
 
         <div className="flex items-center pr-30 gap-6 mr-4">
-          
+
           <div className="relative flex items-center flex-shrink-0" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -145,9 +164,11 @@ export default function NavigationBarApp() {
             onClick={() => router.push("/user/cart")}
             className="relative flex flex-col items-center hover:scale-105 transition-transform group cursor-pointer ml-2"
           >
-            <span className="absolute -top-3 text-xl font-extrabold flex items-center justify-center text-black">
-              {cartCount}
-            </span>
+            {Number(cartCount + cartCountItem) > 0 && (
+              <span className="absolute -top-3 text-xl font-extrabold flex items-center justify-center text-black">
+                {cartCount + cartCountItem}
+              </span>
+            )}
             <ShoppingCart size={40} className="text-black group-hover:text-gray-800 transition-colors mt-2" />
             <span className="text-lg font-bold text-black group-hover:text-gray-800 transition-colors">
               Cart
