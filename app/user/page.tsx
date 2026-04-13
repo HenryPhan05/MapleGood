@@ -1,3 +1,4 @@
+"use client"
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import StarRating from "../components/StarRating";
 import NavigationBarApp from "../components/NavigationBarApp";
@@ -19,7 +20,7 @@ import { auth } from '@/lib/firebase'
 import type { User } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 
-export default function homepageUser() {
+export default function HomepageUser() {
   
     const [user, setUser] = useState<User | null>(null);
 
