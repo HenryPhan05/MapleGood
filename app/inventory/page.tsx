@@ -23,9 +23,6 @@ export default function InventoryProductRegistrationPage() {
     const unitPrice = formData.get("unitPrice") as string;
     const stockLevel = formData.get("stockLevel") as string;
     const description = formData.get("description") as string;
-    
-    // Note: If you want to use the category later, you can extract it like this:
-    // const category = formData.get("category") as string;
 
     if (!productName || !unitPrice || !stockLevel) {
       setError("Please fill out all required fields (Name, Price, Stock).");
@@ -42,7 +39,7 @@ export default function InventoryProductRegistrationPage() {
           price: unitPrice, 
           stockQuantity: Number(stockLevel),
           description,
-          isActive: true, // Assuming new products are active by default
+          isActive: true, 
         }),
       });
 
@@ -57,7 +54,9 @@ export default function InventoryProductRegistrationPage() {
       router.refresh(); 
     } catch (err: any) {
       setError(err.message);
-      setIsSubmitting(false);
+    } finally {
+      // This ensures the spinning animation stops regardless of success or error
+      setIsSubmitting(false); 
     }
   }
 

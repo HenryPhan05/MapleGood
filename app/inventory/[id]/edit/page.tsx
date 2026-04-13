@@ -70,7 +70,6 @@ export default function EditProductPage() {
     setError(null);
 
     try {
-      // Assuming you have a PATCH or PUT route at /api/products/[id]
       const res = await fetch(`/api/products/${productId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -93,9 +92,10 @@ export default function EditProductPage() {
       router.refresh();
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      // Added finally block here as well
       setIsSubmitting(false);
     }
-  }
 
   return (
     <div className="p-6 sm:p-8 lg:p-10">
