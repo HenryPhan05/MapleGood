@@ -9,7 +9,7 @@ import {
   increment,
 } from 'firebase/firestore';
 
-export type CartItem = {
+export type CartItemType = {
   id: string;
   name: string;
   category: string;
