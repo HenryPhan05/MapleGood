@@ -13,7 +13,7 @@ import logoIcon from "../public/images/logo icon.png";
 // addd to cart
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { auth } from "@/lib/firebase";
+
 
 const CATEGORIES = [
   "Car devices",
