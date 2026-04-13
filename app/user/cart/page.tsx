@@ -3,34 +3,64 @@
 import { useEffect, useState } from "react";
 import NavigationBarApp from "../../components/NavigationBarApp";
 import Footer from "../../components/Footer";
-import { UseCartStore } from "@/app/products/cartStore";
+
 import { Trash2, Plus, Minus } from "lucide-react";
 import carElectronicsImage from "../../public/images/categories/carElectronic.png";
 import headphoneImage from "../../public/images/products/headphone.png";
 import phoneImage from "../../public/images/products/phone.png";
 import Image from "next/image";
-type CartItem = {
-  id: string,
-  name: string,
-  category: string,
-  price: number,
-  description: string,
-  quantity: number,
-  image: any,
-  rate: number,
-}
+import { getCart, removeFromCart, updateCartItem } from "./cartService";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { CartItem } from "./cartService";
 
 export default function CartPage() {
   // Sample cart data matching the products on the homepage
-
-  const cartItems = UseCartStore((state) => state.cartItems);
-  const updateQuantity = UseCartStore((state) => state.updateQuantity);
-
-  const removeItem = UseCartStore((state) => state.removeItem);
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + (item.price ?? 0) * item.quantity,
+    0
+  );
+  
   const tax = subtotal * 0.13;
   const total = subtotal + tax;
 
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const data = await getCart(user.uid);
+        setCartItems(data as CartItem[]);
+      }
+    });
+
+    return () => unsub();
+  }, []);
+
+  const handleRemove = async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    setCartItems(prev => prev.filter(item => item.id !== id));
+    await removeFromCart(user.uid, id);
+  }
+  
+   const handleUpdateQuantity = async (id: string, delta: number) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const item = cartItems.find(i => i.id === id);
+    if (!item) return;
+
+    const newQuantity = Math.max(1, item.quantity + delta);
+
+    const updated = cartItems.map(item =>
+      item.id === id ? { ...item, quantity: newQuantity } : item
+    );
+
+    setCartItems(updated);
+
+    await updateCartItem(user.uid, id, newQuantity);
+  };
   return (
     <div className="bg-gray-100 min-h-screen w-full">
       <div className="sticky top-0 bg-white" style={{ zIndex: 1000 }}>
@@ -83,7 +113,7 @@ export default function CartPage() {
                     {/* Quantity controls */}
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => updateQuantity(item.id, -1)}
+                        onClick={() => handleUpdateQuantity(item.id, -1)}
                         className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center hover:bg-gray-300 cursor-pointer"
                       >
                         <Minus size={18} color="black" />
@@ -92,7 +122,7 @@ export default function CartPage() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.id, 1)}
+                        onClick={() => handleUpdateQuantity(item.id, 1)}
                         className="w-10 h-10 rounded  flex items-center justify-center hover:bg-gray-300 cursor-pointer"
                         style={{ backgroundColor: "#E8A800" }}
                       >
@@ -114,7 +144,7 @@ export default function CartPage() {
 
                     {/* Remove button */}
                     <button
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => handleRemove(item.id)}
                       className="text-red-500 hover:text-red-700 cursor-pointer p-2"
                     >
                       <Trash2 size={24} />
