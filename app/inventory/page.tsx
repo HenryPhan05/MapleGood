@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ImagePlus, Loader2 } from "lucide-react";
+import { ChevronDown, ImagePlus, Loader2, X } from "lucide-react";
 
 const ACCENT = "#E0A800";
 
@@ -11,14 +11,38 @@ export default function InventoryProductRegistrationPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // NEW: State variable for the success message
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeImage = (e: React.MouseEvent) => {
+    e.preventDefault(); 
+    setImageFile(null);
+    setImagePreview(null);
+  };
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsSubmitting(true);
+    
+    // Clear any previous messages before submitting again
     setError(null);
+    setSuccessMessage(null);
 
-    // Extract data from the form
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    
     const productName = formData.get("productName") as string;
     const unitPrice = formData.get("unitPrice") as string;
     const stockLevel = formData.get("stockLevel") as string;
@@ -31,6 +55,26 @@ export default function InventoryProductRegistrationPage() {
     }
 
     try {
+      let imageURL = null;
+
+      if (imageFile) {
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", imageFile);
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadFormData,
+        });
+
+        const uploadData = await uploadRes.json();
+
+        if (!uploadRes.ok) {
+          throw new Error(uploadData.error || "Failed to upload the image.");
+        }
+
+        imageURL = uploadData.url;
+      }
+
       const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -39,6 +83,7 @@ export default function InventoryProductRegistrationPage() {
           price: unitPrice, 
           stockQuantity: Number(stockLevel),
           description,
+          imageURL, 
           isActive: true, 
         }),
       });
@@ -49,14 +94,28 @@ export default function InventoryProductRegistrationPage() {
         throw new Error(data.error || "Failed to save product.");
       }
 
-      // Success! Redirect back to inventory list
-      router.push("/inventory");
+      // Reset the physical form inputs
+      form.reset();
+      
+      // Clear the image preview state
+      setImageFile(null);
+      setImagePreview(null);
+
+      // NEW: Show success message
+      setSuccessMessage("Product added successfully!");
+
+      // Optional: Hide the success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+
+      // Refresh router data in the background, but do NOT redirect
       router.refresh(); 
+      
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "An unexpected error occurred.");
     } finally {
-      // This ensures the spinning animation stops regardless of success or error
-      setIsSubmitting(false); 
+      setIsSubmitting(false);
     }
   }
 
@@ -107,6 +166,13 @@ export default function InventoryProductRegistrationPage() {
       {error && (
         <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
           <strong>Error: </strong> {error}
+        </div>
+      )}
+
+      {/* NEW: Success Message Display */}
+      {successMessage && (
+        <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+          <strong>Success: </strong> {successMessage}
         </div>
       )}
 
@@ -230,16 +296,42 @@ export default function InventoryProductRegistrationPage() {
               <ImagePlus className="h-5 w-5" style={{ color: ACCENT }} />
               Visual Assets
             </h2>
-            <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-6 py-14 transition hover:border-gray-400 hover:bg-gray-100">
-              <input type="file" accept="image/png,image/jpeg,.raw" className="sr-only" />
-              <ImagePlus className="h-12 w-12 text-gray-400" strokeWidth={1.25} />
-              <span className="mt-4 text-center font-semibold text-gray-800">
-                Upload Schematic Image
-              </span>
-              <span className="mt-1 text-center text-sm text-gray-500">
-                PNG, JPG or RAW (Max 10MB)
-              </span>
-            </label>
+            
+            {imagePreview ? (
+              <div className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-gray-200 bg-gray-50 p-4">
+                <button
+                  onClick={removeImage}
+                  className="absolute right-3 top-3 rounded-full bg-black/50 p-1.5 text-white transition hover:bg-black/70"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={imagePreview} 
+                  alt="Product Preview" 
+                  className="max-h-[250px] rounded-lg object-contain"
+                />
+                <span className="mt-3 truncate px-4 text-sm font-medium text-gray-600">
+                  {imageFile?.name}
+                </span>
+              </div>
+            ) : (
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-6 py-14 transition hover:border-gray-400 hover:bg-gray-100">
+                <input 
+                  type="file" 
+                  accept="image/png,image/jpeg,image/webp" 
+                  className="sr-only" 
+                  onChange={handleImageChange}
+                />
+                <ImagePlus className="h-12 w-12 text-gray-400" strokeWidth={1.25} />
+                <span className="mt-4 text-center font-semibold text-gray-800">
+                  Upload Product Image
+                </span>
+                <span className="mt-1 text-center text-sm text-gray-500">
+                  PNG, JPG or WEBP (Max 10MB)
+                </span>
+              </label>
+            )}
           </section>
         </div>
       </form>
