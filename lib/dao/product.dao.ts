@@ -35,27 +35,15 @@ export const productDao = {
   async search(
     query: string,
     limit: number,
-    offset: number
-  ): Promise<Product[]> {
-    // Firestore doesn't support LIKE queries natively.
-    // Fetch active products and filter in memory.
-    const snapshot = await collection
-      .where("isDeleted", "==", false)
-      .where("isActive", "==", true)
-      .orderBy("createdAt", "desc")
-      .get();
-
-    const lowerQuery = query.toLowerCase();
-    const filtered = snapshot.docs
-      .map(doc => ({ ...doc.data(), id: doc.id } as Product))
-      .filter(
-        p =>
-          p.productName?.toLowerCase().includes(lowerQuery) ||
-          p.brand?.toLowerCase().includes(lowerQuery) ||
-          p.description?.toLowerCase().includes(lowerQuery)
-      );
-
-    return filtered.slice(offset, offset + limit);
+    offset: number,
+    conn?: PoolConnection
+  ): Promise<ProductRow[]> {
+    const pattern = `%${query}%`;
+    return runQuery<ProductRow[]>(
+      `SELECT * FROM Product WHERE isDeleted = FALSE AND isActive = TRUE AND (productName LIKE ? OR brand LIKE ? OR description LIKE ?) ORDER BY productID DESC LIMIT ? OFFSET ?`,
+      [pattern, pattern, pattern, limit, offset],
+      conn
+    );
   },
 
   async insert(
@@ -69,24 +57,26 @@ export const productDao = {
       model?: string | null;
       specifications?: string | null;
       isActive?: boolean;
-    }
-  ): Promise<string> {
-    const now = new Date();
-    const docRef = await collection.add({
-      productName: data.productName,
-      description: data.description ?? null,
-      price: String(data.price),
-      stockQuantity: data.stockQuantity ?? 0,
-      imageURL: data.imageURL ?? null,
-      brand: data.brand ?? null,
-      model: data.model ?? null,
-      specifications: data.specifications ?? null,
-      isActive: data.isActive ?? true,
-      isDeleted: false,
-      createdAt: now,
-      updatedAt: now,
-    });
-    return docRef.id;
+    },
+    conn?: PoolConnection
+  ): Promise<number> {
+    const res = await runExecute(
+      `INSERT INTO Product (productName, description, price, stockQuantity, imageURL, brand, model, specifications, isActive)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        data.productName,
+        data.description ?? null,
+        String(data.price),
+        data.stockQuantity ?? 0,
+        data.imageURL ?? null,
+        data.brand ?? null,
+        data.model ?? null,
+        data.specifications ?? null,
+        data.isActive ?? true,
+      ],
+      conn
+    );
+    return res.insertId;
   },
 
   async update(productID: string, data: Partial<Product>): Promise<void> {
