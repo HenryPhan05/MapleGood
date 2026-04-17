@@ -107,7 +107,6 @@ export default function DashboardPage() {
       // Save products to inventory state
       setInventoryItems(products);
 
-      // Top-level Metrics Calculation
       const totalOrders = orders.length;
       const totalProducts = products.length;
       const inventoryInStock = products.reduce((acc, p) => acc + (p.stockQuantity ?? p.stock ?? 0), 0);
@@ -223,13 +222,11 @@ export default function DashboardPage() {
         stockQuantity: Number(editForm.stockQuantity)
       });
       
-      // Update local state smoothly without a full refresh
       setInventoryItems(prev => prev.map(p => 
         p.id === id ? { ...p, price: Number(editForm.price), stockQuantity: Number(editForm.stockQuantity) } : p
       ));
       setEditingId(null);
       
-      // Trigger a light refresh of the dashboard metrics to reflect the new stock quantities
       fetchDashboardData();
     } catch (error) {
       console.error("Error updating product:", error);
@@ -244,7 +241,6 @@ export default function DashboardPage() {
       await deleteDoc(doc(db, "products", id));
       setInventoryItems(prev => prev.filter(p => p.id !== id));
       
-      // Refresh dashboard metrics
       fetchDashboardData();
     } catch (error) {
       console.error("Error deleting product:", error);

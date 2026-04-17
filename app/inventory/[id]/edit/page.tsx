@@ -15,7 +15,6 @@ export default function EditProductPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form State
   const [formData, setFormData] = useState({
     productName: "",
     category: "",
@@ -24,14 +23,12 @@ export default function EditProductPage() {
     description: "",
   });
 
-  // 1. Fetch the existing product data when the page loads
   useEffect(() => {
     if (!productId) return;
 
     async function fetchProduct() {
       try {
         setIsLoading(true);
-        // Assuming you have a GET route like /api/products/[id]
         const res = await fetch(`/api/products/${productId}`);
         const json = await res.json();
 
@@ -41,7 +38,7 @@ export default function EditProductPage() {
           const product = json.data;
           setFormData({
             productName: product.productName || "",
-            category: product.category || "", // Adjust if your DB uses category IDs
+            category: product.category || "", 
             unitPrice: product.price || "0.00",
             stockLevel: String(product.stockQuantity || 0),
             description: product.description || "",
@@ -57,13 +54,11 @@ export default function EditProductPage() {
     fetchProduct();
   }, [productId]);
 
-  // Handle Input Changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 2. Submit the updated data back to the database
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsSubmitting(true);
@@ -87,13 +82,11 @@ export default function EditProductPage() {
         throw new Error(data.error || "Failed to update product.");
       }
 
-      // Success! Redirect back to inventory list
       router.push("/inventory");
       router.refresh();
     } catch (err: any) {
       setError(err.message);
     } finally {
-      // Added finally block here as well
       setIsSubmitting(false);
     }
 
@@ -185,7 +178,6 @@ export default function EditProductPage() {
                       <option value="" disabled>
                         Select Hardware Class
                       </option>
-                      {/* You can also fetch these from the database if needed! */}
                       <option value="car-screens">Car Screens</option>
                       <option value="speakers">Speakers</option>
                       <option value="phone-acc">Phone Accessories</option>

@@ -5,7 +5,7 @@ export interface CustomerRow {
   lastName: string;
   email: string;
   phone: string | null;
-  password?: string; // Often handled externally by Firebase Auth
+  password?: string; 
   address: string | null;
   city: string | null;
   province: string | null;

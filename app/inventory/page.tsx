@@ -11,10 +11,7 @@ export default function InventoryProductRegistrationPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // NEW: State variable for the success message
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -35,14 +32,11 @@ export default function InventoryProductRegistrationPage() {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Clear any previous messages before submitting again
     setError(null);
     setSuccessMessage(null);
 
     const form = e.currentTarget;
     const formData = new FormData(form);
-    
     const productName = formData.get("productName") as string;
     const unitPrice = formData.get("unitPrice") as string;
     const stockLevel = formData.get("stockLevel") as string;
@@ -94,22 +88,15 @@ export default function InventoryProductRegistrationPage() {
         throw new Error(data.error || "Failed to save product.");
       }
 
-      // Reset the physical form inputs
       form.reset();
       
-      // Clear the image preview state
       setImageFile(null);
       setImagePreview(null);
-
-      // NEW: Show success message
       setSuccessMessage("Product added successfully!");
-
-      // Optional: Hide the success message after 3 seconds
       setTimeout(() => {
         setSuccessMessage(null);
       }, 3000);
 
-      // Refresh router data in the background, but do NOT redirect
       router.refresh(); 
       
     } catch (err: any) {
@@ -129,16 +116,6 @@ export default function InventoryProductRegistrationPage() {
           <h1 className="mt-2 text-3xl font-bold text-black">
             Product Registration
           </h1>
-          <p className="mt-2 text-sm text-gray-500">
-            Demo:{" "}
-            <Link
-              href="/inventory/vortex-ecu-pro-x/edit"
-              className="font-medium underline underline-offset-2"
-              style={{ color: ACCENT }}
-            >
-              Open edit product page
-            </Link>
-          </p>
         </div>
         <div className="flex shrink-0 gap-3">
           <button
@@ -169,7 +146,7 @@ export default function InventoryProductRegistrationPage() {
         </div>
       )}
 
-      {/* NEW: Success Message Display */}
+      {/* Success Message Display */}
       {successMessage && (
         <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
           <strong>Success: </strong> {successMessage}

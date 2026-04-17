@@ -3,14 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-// Added LayoutDashboard to the imports
 import { Search, ShoppingCart, User, LogOut, ChevronDown, LayoutDashboard } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { UseCartStore } from "@/app/products/cartStore";
 import logoIcon from "../public/images/logo icon.png";
-//add
+
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -30,7 +29,6 @@ export default function NavigationBarApp() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const cartItems = UseCartStore((s) => s.cartItems);
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  // addhomepage
   const [cartCountItem, setCartCountItem] = useState(0)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -153,12 +151,12 @@ export default function NavigationBarApp() {
             )}
           </div>
 
-          <Link href="/wishlist" className="bg-black text-white rounded-xl px-6 py-3 text-lg font-semibold hover:bg-gray-800 transition-colors whitespace-nowrap shadow-sm cursor-pointer hidden xl:block">
+          <button className="bg-black text-white rounded-xl px-6 py-3 text-lg font-semibold hover:bg-gray-800 transition-colors whitespace-nowrap shadow-sm cursor-pointer hidden xl:block">
             Wishlist
-          </Link>
-          <Link href="/contact" className="bg-black text-white rounded-xl px-6 py-3 text-lg font-semibold hover:bg-gray-800 transition-colors whitespace-nowrap shadow-sm cursor-pointer hidden xl:block">
+          </button>
+          <button className="bg-black text-white rounded-xl px-6 py-3 text-lg font-semibold hover:bg-gray-800 transition-colors whitespace-nowrap shadow-sm cursor-pointer hidden xl:block">
             Contact
-          </Link>
+          </button>
 
           <button
             onClick={() => router.push("/user/cart")}
